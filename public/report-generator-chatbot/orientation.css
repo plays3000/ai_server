@@ -1,0 +1,93 @@
+/* ==========================================================================
+   5. 쓰기 모드 및 다국어 지원 (Writing Modes) - 통합 리팩토링
+   ========================================================================== */
+
+/* ---------------------------------------------------
+   5-1. 가로쓰기 (Horizontal)
+   --------------------------------------------------- */
+/* (A) LTR (기본) */
+.horizontal-ltr {
+    writing-mode: horizontal-tb;
+    direction: ltr; text-align: left;
+}
+.horizontal-ltr input[type="text"], .horizontal-ltr textarea {
+    text-align: left; direction: ltr;
+}
+
+/* (B) RTL (히브리, 아랍 등) */
+.horizontal-rtl {
+    direction: rtl; text-align: right;
+}
+.horizontal-rtl .reset-btn { right: auto; left: 20px; } /* 버튼 위치 반전 */
+.horizontal-rtl input[type="text"], .horizontal-rtl textarea { text-align: right; }
+/* 말풍선 꼬리 반전 */
+.horizontal-rtl .bubble.user-bubble { border-bottom-right-radius: 12px; border-bottom-left-radius: 2px; }
+.horizontal-rtl .bubble.ai-bubble { border-bottom-left-radius: 12px; border-bottom-right-radius: 2px; }
+/* 아이콘 간격 반전 */
+.horizontal-rtl .icon-btn i, .horizontal-rtl .status-btn i, .horizontal-rtl .reset-btn i { margin-right: 0; margin-left: 5px; }
+/* 녹음기 위치 반전 */
+.horizontal-rtl .voice-recorder { right: auto; left: 20px; }
+
+
+/* ---------------------------------------------------
+   5-2. 세로쓰기 (Vertical) 공통 설정
+   --------------------------------------------------- */
+.vertical-rl .output-result-stack,
+.vertical-lr-mongolian .output-result-stack,
+.vertical-lr-maya .output-result-stack {
+    flex-direction: column-reverse; /* 최신 글이 진행방향 끝에 */
+    overflow-x: auto; overflow-y: hidden; /* 가로 스크롤 */
+    height: 100%; align-items: flex-start;
+}
+
+/* 메시지 박스 배치 (세로용) */
+.vertical-rl .message-row, .vertical-lr-mongolian .message-row, .vertical-lr-maya .message-row {
+    width: auto; height: 100%; flex-direction: column; margin: 0 10px;
+}
+.vertical-rl .message-row.user, .vertical-lr-mongolian .message-row.user, .vertical-lr-maya .message-row.user {
+    justify-content: flex-end;
+}
+
+/* 말풍선 스타일 (세로용) */
+.vertical-rl .bubble, .vertical-lr-mongolian .bubble, .vertical-lr-maya .bubble {
+    max-width: none; max-height: 85vh; line-height: 1.8;
+}
+
+/* 입력창 스타일 (세로용) */
+.vertical-rl input[type="text"], .vertical-rl textarea,
+.vertical-lr-mongolian input[type="text"], .vertical-lr-mongolian textarea,
+.vertical-lr-maya input[type="text"], .vertical-lr-maya textarea {
+    height: 150px; padding: 15px; text-align: left;
+}
+
+/* 녹음기 UI 위치 재조정 (세로모드용) */
+.vertical-rl .voice-recorder, .vertical-lr-mongolian .voice-recorder, .vertical-lr-maya .voice-recorder {
+    bottom: auto; top: 100px; /* 위쪽에 배치 */
+    flex-direction: column; width: 60px; height: auto; border-radius: 30px; padding: 20px 10px;
+}
+
+
+/* ---------------------------------------------------
+   5-3. 세로쓰기 (Vertical) 개별 설정
+   --------------------------------------------------- */
+
+/* (A) 우 -> 좌 (vertical-rl) : 한/중/일 */
+.vertical-rl .output-result-stack, 
+.vertical-rl input[type="text"], .vertical-rl textarea {
+    writing-mode: vertical-rl; text-orientation: mixed;
+}
+.vertical-rl .voice-recorder { right: 20px; } /* 오른쪽 배치 */
+
+/* (B) 좌 -> 우 (vertical-lr-mongolian) : 몽골/만주 (Mixed) */
+.vertical-lr-mongolian .output-result-stack, 
+.vertical-lr-mongolian input[type="text"], .vertical-lr-mongolian textarea {
+    writing-mode: vertical-lr; text-orientation: mixed;
+}
+.vertical-lr-mongolian .voice-recorder { right: auto; left: 20px; } /* 왼쪽 배치 */
+
+/* (C) 좌 -> 우 (vertical-lr-maya) : 마야/상형문자 (Upright) */
+.vertical-lr-maya .output-result-stack,
+.vertical-lr-maya input[type="text"], .vertical-lr-maya textarea {
+    writing-mode: vertical-lr; text-orientation: upright; letter-spacing: 2px;
+}
+.vertical-lr-maya .voice-recorder { right: auto; left: 20px; } /* 왼쪽 배치 */

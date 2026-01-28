@@ -1,0 +1,52 @@
+<div class="input-container-wrapper">
+    <div class="input-box">
+        
+        <div class="file-upload-status" id="fileStatusArea" style="display: none;"></div>
+
+        <div class="upload-files-list" id="fileListArea"></div>
+
+        <%- include('voicerecorder') %>
+
+        <div class="main-input-group">
+            <input type="text" id="reportTitle" placeholder="보고서주제 또는 제목을 입력하세요..." />
+            <button class="generate-btn">
+                <i class="fas fa-paper-plane"></i> 생성
+            </button>
+        </div>
+
+        <div class="detail-description">
+            <textarea id="reportDetail" placeholder="여기에 상세 요구사항이나 추가 설명을 입력하세요 (선택사항)"></textarea>
+            <button class="example-btn" id="btnExample" title="예시데이터자동입력">
+                <i class="fas fa-magic"></i><br>예시값
+            </button>
+        </div>
+
+        <div class="toolbar">
+            <div class="icon-group left">
+                <div class="icon-btn"><i class="fas fa-chart-line"></i><span>재무</span></div>
+                <div class="icon-btn"><i class="fas fa-calculator"></i><span>회계</span></div>
+                <div class="icon-btn"><i class="fas fa-users"></i><span>인사</span></div>
+                <div class="icon-btn"><i class="fas fa-plus-circle"></i></div>
+            </div>
+            
+            <div class="icon-group right">
+                <input type="file" id="realFileInput" hidden multiple>
+                <input type="file" id="realImageInput" hidden accept="image/*" multiple>
+
+                <div class="icon-btn" id="btnAttachFile"><i class="fas fa-paperclip"></i><span>파일</span></div>
+                <div class="icon-btn" id="btnAttachImage"><i class="fas fa-image"></i><span>이미지</span></div>
+                <div class="icon-btn" id="btnVoiceRecord"><i class="fas fa-microphone"></i><span>음성</span></div>
+            </div>
+        </div>
+
+        <!-- <div class="model-selector">
+            <div class="model-chip active" data-model="gpt">GPT-5</div>
+            <div class="model-chip" data-model="gemini">Gemini 3</div>
+            <div class="model-chip" data-model="claude">Claude Sonnet 4</div>
+            <div class="model-chip" data-model="llama">LLAMA 4</div>
+        </div> -->
+
+        <%- include('footer') %>
+
+    </div>
+</div>
