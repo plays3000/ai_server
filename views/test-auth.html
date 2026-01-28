@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 테스트</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 500px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+        .tab.active {
+            background-color: #007bff;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 로그인 시스템 테스트</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('register')">회원가입</div>
+        <div class="tab" onclick="showTab('login')">로그인</div>
+    </div>
+
+    <!-- 회원가입 폼 -->
+    <div id="register-tab" class="tab-content active">
+        <h2>회원가입</h2>
+        <div class="form-group">
+            <label>이름</label>
+            <input type="text" id="reg-name" placeholder="홍길동">
+        </div>
+        <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="reg-email" placeholder="test@example.com">
+        </div>
+        <div class="form-group">
+            <label>비밀번호</label>
+            <input type="password" id="reg-password" placeholder="비밀번호">
+        </div>
+        <!-- ✅ 회사명 입력 필드 추가 -->
+        <div class="form-group">
+            <label>회사명 (선택사항)</label>
+            <input type="text" id="reg-company" placeholder="회사명 (비워두면 개인 워크스페이스 생성)">
+            <p style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+                💡 기존 회사명을 입력하면 해당 회사의 사원으로 가입됩니다.
+            </p>
+        </div>
+        <button onclick="register()">회원가입</button>
+    </div>
+
+    <!-- 로그인 폼 -->
+    <div id="login-tab" class="tab-content">
+        <h2>로그인</h2>
+        <div class="form-group">
+            <label>이메일</label>
+            <input type="email" id="login-email" placeholder="test@example.com">
+        </div>
+        <div class="form-group">
+            <label>비밀번호</label>
+            <input type="password" id="login-password" placeholder="비밀번호">
+        </div>
+        <button onclick="login()">로그인</button>
+        
+        <!-- ✅ 소셜 로그인 버튼 추가 -->
+        <div style="margin-top: 20px; text-align: center;">
+            <p style="color: #666; margin-bottom: 10px;">또는</p>
+            <button onclick="loginWithGoogle()" style="background-color: #4285F4; margin-bottom: 10px;">
+                <i class="fab fa-google"></i> 구글로 로그인
+            </button>
+            <button onclick="loginWithNaver()" style="background-color: #03C75A;">
+                <i class="fab fa-naver"></i> 네이버로 로그인
+            </button>
+        </div>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'register') {
+                document.querySelector('.tab:first-child').classList.add('active');
+                document.getElementById('register-tab').classList.add('active');
+            } else {
+                document.querySelector('.tab:last-child').classList.add('active');
+                document.getElementById('login-tab').classList.add('active');
+            }
+            
+            document.getElementById('result').style.display = 'none';
+        }
+
+        // ✅ 회원가입 함수 (회사명 포함)
+        async function register() {
+            const name = document.getElementById('reg-name').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const companyName = document.getElementById('reg-company').value;
+
+            try {
+                const response = await fetch('/auth/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, email, password, companyName })
+                });
+
+                const data = await response.json();
+                showResult(data, response.ok);
+
+                if (response.ok) {
+                    document.getElementById('reg-name').value = '';
+                    document.getElementById('reg-email').value = '';
+                    document.getElementById('reg-password').value = '';
+                    document.getElementById('reg-company').value = '';
+                }
+
+            } catch (error) {
+                showResult({ message: '서버 연결 실패: ' + error.message }, false);
+            }
+        }
+
+        async function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            try {
+                const response = await fetch('/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // 토큰 저장
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+                    
+                    // ✅ 메인 페이지로 리다이렉션
+                    window.location.href = '/';
+                } else {
+                    showResult(data, false);
+                }
+
+            } catch (error) {
+                showResult({ message: '서버 연결 실패: ' + error.message }, false);
+            }
+        }
+
+        function loginWithGoogle() {
+            window.location.href = '/auth/google';
+        }
+
+        function loginWithNaver() {
+            window.location.href = '/auth/naver';
+        }
+
+        // URL 파라미터로 받은 토큰 처리
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const name = urlParams.get('name');
+            const error = urlParams.get('error');
+
+            if (token) {
+                localStorage.setItem('token', token);
+                localStorage.setItem('userName', name);
+                
+                // ✅ 잠시 성공 메시지 보여주고 리다이렉션
+                showResult({
+                    message: `${name}님, 로그인 성공! 메인 페이지로 이동합니다...`
+                }, true);
+                
+                setTimeout(() => {
+                    window.location.href = '/';
+                }, 1500);
+                
+            } else if (error) {
+                showResult({ message: '소셜 로그인 실패' }, false);
+            }
+        });
+
+        function showResult(data, isSuccess) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result ' + (isSuccess ? 'success' : 'error');
+            resultDiv.textContent = data.message;
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -10,6 +10,15 @@
 <body>
     <header>
         <h1><i class="fas fa-robot"></i> AI기반보고서생성기</h1>
+        
+        <!-- ✅ 로그인 상태 표시 추가 -->
+        <div id="userInfo" style="position: absolute; right: 120px; top: 50%; transform: translateY(-50%); display: none;">
+            <span id="userName" style="color: #2c3e50; font-weight: bold;"></span>님
+            <button onclick="logout()" style="margin-left: 10px; padding: 5px 10px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                로그아웃
+            </button>
+        </div>
+        
         <button id="resetBtn" class="reset-btn" title="대화 초기화">
             <i class="fas fa-trash-alt"></i> 초기화
         </button>
@@ -163,5 +172,40 @@
     </div>
 
     <script src="/scripts/script.js"></script>
+    
+    <!-- ✅ 로그인 상태 체크 스크립트 추가 -->
+    <script>
+        // 페이지 로드 시 로그인 상태 확인
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = localStorage.getItem('token');
+            const userName = localStorage.getItem('userName');
+            const user = localStorage.getItem('user');
+
+            if (token) {
+                // 로그인 상태 표시
+                document.getElementById('userInfo').style.display = 'block';
+                
+                if (userName) {
+                    document.getElementById('userName').textContent = userName;
+                } else if (user) {
+                    const userData = JSON.parse(user);
+                    document.getElementById('userName').textContent = userData.name;
+                }
+            } else {
+                // 로그인 안 되어 있으면 로그인 페이지로 리다이렉션
+                window.location.href = '/test-auth.html';
+            }
+        });
+
+        // 로그아웃 함수
+        function logout() {
+            if (confirm('로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('token');
+                localStorage.removeItem('userName');
+                localStorage.removeItem('user');
+                window.location.href = '/test-auth.html';
+            }
+        }
+    </script>
 </body>
 </html>

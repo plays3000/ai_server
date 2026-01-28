@@ -7,6 +7,9 @@ import 'dotenv/config';
 import { pool, connectToDatabase } from './config/dbConfig.js';
 import { model } from './config/geminiConfig.js';
 import excelRouter from './routes/excel.js';
+import authRouter from './dist/routes/auth.js';
+import session from 'express-session';
+import passport from './dist/config/passportConfig.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,10 +30,25 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, "/public")));
 app.use(express.static(path.join(__dirname, "/node_modules")));
 
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'session-secret',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: false } // HTTPS 사용시 true
+}));
+
+app.use(passport.initialize());
+app.use(passport.session());
+
 app.use('/excel', excelRouter);
+app.use('/auth', authRouter);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
+});
+
+app.get('/test-auth.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'test-auth.html'));
 });
 
 // ✅ 두 개의 /chat 라우트를 하나로 통합했습니다.
