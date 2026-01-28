@@ -98,14 +98,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- <div class="model-selector">
-                <div class="model-chip active" data-model="gpt">GPT-5</div>
-                <div class="model-chip" data-model="gemini">Gemini 3</div>
-                <div class="model-chip" data-model="claude">Claude Sonnet 4</div>
-                <div class="model-chip" data-model="llama">LLAMA 4</div>
-                <div class="model-chip" data-model="deepseek">Deepseek</div>
-            </div> -->
             
             <div class="status-bar">
                 <div class="status-left">
@@ -172,17 +164,20 @@
     </div>
 
     <script src="/scripts/script.js"></script>
+    <script src="/scripts/generate.js"></script>
+    <script src="/scripts/voice.js"></script>
+    <script src="/scripts/exampleScript.js"></script>
+    <script src="/scripts/fileManager.js"></script>
+    <script src="/scripts/languageSetting.js"></script>
     
     <!-- ✅ 로그인 상태 체크 스크립트 추가 -->
     <script>
-        // 페이지 로드 시 로그인 상태 확인
         window.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('token');
             const userName = localStorage.getItem('userName');
             const user = localStorage.getItem('user');
 
             if (token) {
-                // 로그인 상태 표시
                 document.getElementById('userInfo').style.display = 'block';
                 
                 if (userName) {
@@ -192,12 +187,10 @@
                     document.getElementById('userName').textContent = userData.name;
                 }
             } else {
-                // 로그인 안 되어 있으면 로그인 페이지로 리다이렉션
                 window.location.href = '/test-auth.html';
             }
         });
 
-        // 로그아웃 함수
         function logout() {
             if (confirm('로그아웃 하시겠습니까?')) {
                 localStorage.removeItem('token');
