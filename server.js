@@ -34,59 +34,103 @@ app.get('/', (req, res) => {
 });
 
 // ✅ 두 개의 /chat 라우트를 하나로 통합했습니다.
-app.post('/chat', upload.single('pdfFile'), async (req, res) => {
+app.post('/chat', upload.array('pdfFile', 10), async (req, res) => {
     try {
-        // 프론트엔드에서 보낸 title과 detail을 합쳐서 프롬프트를 만듭니다.
         const { title, detail } = req.body;
-        
-        // title이 없으면 detail이나 message 등 다른 필드 확인 (안전장치)
         const userMessage = title ? `${title}\n${detail || ''}` : req.body.message;
 
         if (!userMessage) {
             return res.status(400).json({ error: "입력된 메시지가 없습니다." });
         }
 
-        // Gemini에게 보낼 데이터 배열 구성
+        // Gemini에게 보낼 기본 텍스트 추가
         const chatInputs = [{ text: userMessage }];
 
-        // 1. 파일이 업로드된 경우 PDF 데이터 추가
-        if (req.file) {
-            const pdfData = {
-                inlineData: {
-                    data: fs.readFileSync(req.file.path).toString("base64"),
-                    mimeType: "application/pdf",
-                },
-            };
-            chatInputs.push(pdfData);
+        // ✅ 수정 포인트: req.file 대신 req.files(배열)를 사용합니다.
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                const pdfData = {
+                    inlineData: {
+                        data: fs.readFileSync(file.path).toString("base64"),
+                        mimeType: "application/pdf",
+                    },
+                };
+                chatInputs.push(pdfData);
 
-            // 파일 처리 후 즉시 삭제
-            fs.unlinkSync(req.file.path);
+                // 파일 읽은 후 즉시 삭제
+                fs.unlinkSync(file.path);
+            });
+            console.log(`${req.files.length}개의 파일이 Gemini에게 전달되었습니다.`);
         }
 
-        // 2. Gemini 답변 생성 (generateContent 사용)
-        // [중요] chatInputs는 [{text: '...'}, {inlineData: '...'}] 형태여야 합니다.
+        // Gemini 답변 생성
         const result = await model.generateContent(chatInputs);
         const reply = result.response.text();
 
-        // 3. MySQL에 기록 저장
+        // MySQL 저장 (기존과 동일)
         const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
-        try {
-            await pool.query(sql, [userMessage, reply]);
-            console.log('DB 저장이 완료되었습니다.')
-        } catch (dbError) {
-            console.error("DB 저장 에러:", dbError.message);
-        }
+        await pool.query(sql, [userMessage, reply]);
 
-        // 4. 최종 응답 전송
         res.json({ reply: reply });
 
     } catch (error) {
         console.error("에러 상세:", error);
-        if (!res.headersSent) {
-            res.status(500).json({ error: "분석 중 오류 발생", message: error.message });
-        }
+        res.status(500).json({ error: "분석 중 오류 발생", message: error.message });
     }
 });
+// app.post('/chat', upload.array('pdfFile', 10), async (req, res) => {
+//     try {
+//         // 프론트엔드에서 보낸 title과 detail을 합쳐서 프롬프트를 만듭니다.
+//         const { title, detail } = req.body;
+        
+//         // title이 없으면 detail이나 message 등 다른 필드 확인 (안전장치)
+//         const userMessage = title ? `${title}\n${detail || ''}` : req.body.message;
+
+//         if (!userMessage) {
+//             return res.status(400).json({ error: "입력된 메시지가 없습니다." });
+//         }
+
+//         // Gemini에게 보낼 데이터 배열 구성
+//         const chatInputs = [{ text: userMessage }];
+
+//         // 1. 파일이 업로드된 경우 PDF 데이터 추가
+//         if (req.file) {
+//             const pdfData = {
+//                 inlineData: {
+//                     data: fs.readFileSync(req.file.path).toString("base64"),
+//                     mimeType: "application/pdf",
+//                 },
+//             };
+//             chatInputs.push(pdfData);
+
+//             // 파일 처리 후 즉시 삭제
+//             fs.unlinkSync(req.file.path);
+//         }
+
+//         // 2. Gemini 답변 생성 (generateContent 사용)
+//         // [중요] chatInputs는 [{text: '...'}, {inlineData: '...'}] 형태여야 합니다.
+//         const result = await model.generateContent(chatInputs);
+//         const reply = result.response.text();
+
+//         // 3. MySQL에 기록 저장
+//         const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
+//         try {
+//             await pool.query(sql, [userMessage, reply]);
+//             console.log('DB 저장이 완료되었습니다.')
+//         } catch (dbError) {
+//             console.error("DB 저장 에러:", dbError.message);
+//         }
+
+//         // 4. 최종 응답 전송
+//         res.json({ reply: reply });
+
+//     } catch (error) {
+//         console.error("에러 상세:", error);
+//         if (!res.headersSent) {
+//             res.status(500).json({ error: "분석 중 오류 발생", message: error.message });
+//         }
+//     }
+// });
 
 app.listen(port, () => {
   console.log(`서버 실행 중: http://localhost:${port}`);

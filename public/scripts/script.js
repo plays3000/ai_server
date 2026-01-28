@@ -1,5 +1,5 @@
-const chatContainer = document.getElementById('chatContainer');
 let currentModel = 'gpt'; // 기본 모델
+const chatContainer = document.getElementById('chatContainer');
 
 // 파일 데이터 저장소
 const filesData = { image: [], audio: [], file: [] };
@@ -18,169 +18,6 @@ chips.forEach(chip => {
     });
 });
 
-/* ==========================================================================
-   3. 보고서 생성 (채팅) 로직
-   ========================================================================== */
-async function generateReport() {
-    const titleInput = document.getElementById('reportTitle');
-    const detailInput = document.getElementById('reportDetail');
-    const fileInput = document.getElementById('pdf-file');
-    // const chatContainer = document.getElementById('chat-box'); // 또는 기존의 chatContainer
-
-    const title = titleInput.value.trim();
-    const detail = detailInput.value.trim();
-
-    // 1. 유효성 검사
-    if (!title) {
-        alert("보고서 주제를 입력해주세요!");
-        titleInput.focus();
-        return;
-    }
-
-    // 2. 사용자 메시지 화면에 표시
-    const userHtml = `
-        <div class="message-row user">
-            <div class="bubble user-bubble">
-                <strong>${title}</strong><br>
-                ${detail ? detail.replace(/\n/g, '<br>') : ''}
-                ${typeof getAttachedFileSummary === 'function' ? getAttachedFileSummary() : ''}
-            </div>
-        </div>
-    `;
-    chatContainer.insertAdjacentHTML('afterbegin', userHtml);
-
-    // 3. 로딩 표시 시작
-    const loadingId = 'loading-' + Date.now();
-    const loadingHtml = `
-        <div class="message-row ai" id="${loadingId}">
-            <div class="bubble ai-bubble">
-                <div class="loading-dots">
-                    <span></span><span></span><span></span>
-                    &nbsp; <strong>AI</strong>가 작성 중입니다...
-                </div>
-            </div>
-        </div>
-    `;
-    chatContainer.insertAdjacentHTML('afterbegin', loadingHtml);
-
-    // 4. 데이터 준비 (FormData)
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('detail', detail);
-    if (fileInput && fileInput.files[0]) {
-        formData.append('pdfFile', fileInput.files[0]);
-    }
-
-    // 입력창 초기화
-    titleInput.value = '';
-    detailInput.value = '';
-
-    try {
-        // 5. 서버에 데이터 전송
-        const response = await fetch('/chat', {
-            method: 'POST',
-            body: formData 
-        });
-
-        if (!response.ok) throw new Error('서버 응답 오류');
-
-        const data = await response.json();
-
-        // 6. 로딩 제거 및 AI 답변 출력
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) loadingElement.remove();
-
-        const aiResponseHtml = `
-            <div class="message-row ai">
-                <div class="bubble ai-bubble">
-                    ${data.reply}
-                </div>
-            </div>
-        `;
-        chatContainer.insertAdjacentHTML('afterbegin', aiResponseHtml);
-
-    } catch (error) {
-        console.error('에러 발생:', error);
-        const loadingElement = document.getElementById(loadingId);
-        if (loadingElement) loadingElement.remove();
-        
-        chatContainer.insertAdjacentHTML('afterbegin', `
-            <div class="message-row ai">
-                <div class="bubble ai-bubble" style="color:red">
-                    오류가 발생했습니다. 다시 시도해주세요.
-                </div>
-            </div>
-        `);
-    } finally {
-        if (fileInput) fileInput.value = '';
-        if (typeof clearAllFiles === 'function') clearAllFiles(false);
-    }
-}
-
-// 첨부파일이 있을 경우 말풍선에 표시하는 헬퍼 함수
-function getAttachedFileSummary() {
-    const imgCnt = filesData.image.length;
-    const audCnt = filesData.audio.length;
-    const fileCnt = filesData.file.length;
-    if (imgCnt + audCnt + fileCnt === 0) return '';
-
-    return `
-        <div style="margin-top:8px; font-size:0.85rem; opacity:0.9; border-top:1px solid rgba(255,255,255,0.3); padding-top:5px;">
-            <i class="fas fa-paperclip"></i> 첨부: 
-            ${imgCnt ? `이미지 ${imgCnt}개 ` : ''}
-            ${audCnt ? `음성 ${audCnt}개 ` : ''}
-            ${fileCnt ? `파일 ${fileCnt}개` : ''}
-        </div>
-    `;
-}
-
-function clearAllFiles(resetInput) {
-    filesData.image = [];
-    filesData.audio = [];
-    filesData.file = [];
-    updateFileStatus();
-    if (resetInput) {
-        realFileInput.value = '';
-        realImageInput.value = '';
-    }
-}
-
-function updateFileStatus() {
-    const totalCount = filesData.image.length + filesData.audio.length + filesData.file.length;
-    if (totalCount > 0) {
-        fileStatusArea.style.display = 'flex';
-    } else {
-        fileStatusArea.style.display = 'none';
-        fileListArea.classList.remove('active');
-    }
-    document.getElementById('countImage').innerText = filesData.image.length;
-    document.getElementById('countAudio').innerText = filesData.audio.length;
-    document.getElementById('countFile').innerText = filesData.file.length;
-}
-
-// 모델 이름 변환
-function getModelName(modelId) {
-    // const names = { 'gpt': 'GPT-5', 'gemini': 'Gemini 3', 'claude': 'Claude Sonnet', 'llama': 'LLAMA 4', 'deepseek': 'Deepseek' };
-    // return names[modelId] || 'AI Model';
-    return 'AI Model';
-}
-
-// 모델별 응답 내용 생성
-function getResponseByModel(model, title) {
-    // if (model === 'gemini') {
-    //     return `<h3 style="color:#4285F4"><i class="fas fa-star"></i> Gemini 3 리포트</h3><hr style="margin:10px 0;"><p>Gemini가 <strong>'${title}'</strong>을(를) 멀티모달로 분석했습니다.</p>`;
-    // } else if (model === 'gpt') {
-    //     return `<h3 style="color:#10a37f"><i class="fas fa-robot"></i> GPT-5 리포트</h3><hr style="margin:10px 0;"><p>GPT-5가 <strong>'${title}'</strong>에 대한 체계적인 보고서를 작성했습니다.</p>`;
-    // } else {
-    //     return `<h3><i class="fas fa-brain"></i> ${getModelName(model)} 결과</h3><hr style="margin:10px 0;"><p>요청하신 <strong>'${title}'</strong> 분석이 완료되었습니다.</p>`;
-    // }
-    return `<h3><i class="fas fa-brain"></i> ${getModelName(model)} 결과</h3><hr style="margin:10px 0;"><p>요청하신 <strong>'${title}'</strong> 분석이 완료되었습니다.</p>`;
-}
-
-// 엔터키 전송
-document.getElementById('reportTitle').addEventListener('keypress', function (e) {
-    if (e.key === 'Enter') generateReport();
-});
 
 // 초기화 버튼
 const resetBtn = document.getElementById('resetBtn');
@@ -194,6 +31,64 @@ if (resetBtn) {
             clearAllFiles(true);
         }
     });
+}
+
+
+/* ==========================================================================
+   6. 설정(Settings) 및 다국어 쓰기 모드 로직
+   ========================================================================== */
+const settingModal = document.getElementById('settingModal');
+// 설정 버튼 찾기 (하단 상태바)
+const openSettingBtn = document.querySelector('.status-btn[title="화면 설정"]');
+const closeModalX = document.getElementById('closeModalX');
+const btnCancel = document.getElementById('btnCancel');
+const btnApply = document.getElementById('btnApply');
+const btnOk = document.getElementById('btnOk');
+
+if (openSettingBtn) openSettingBtn.addEventListener('click', () => settingModal.classList.add('show'));
+if (closeModalX) closeModalX.addEventListener('click', () => settingModal.classList.remove('show'));
+if (btnCancel) btnCancel.addEventListener('click', () => settingModal.classList.remove('show'));
+
+// [핵심] 설정 적용 함수 (CSS 리팩토링 대응)
+function applySettings() {
+    const writingMode = document.getElementById('writingModeSelect').value;
+    const theme = document.getElementById('themeSelect').value;
+
+    // 1. 클래스 초기화
+    document.body.classList.remove(
+        'vertical-rl', 'vertical-lr-mongolian', 'vertical-lr-maya',
+        'horizontal-rtl', 'horizontal-ltr'
+    );
+
+    // 2. 쓰기 모드 적용
+    if (writingMode === 'vertical-rl') document.body.classList.add('vertical-rl');
+    else if (writingMode === 'vertical-lr-mongolian') document.body.classList.add('vertical-lr-mongolian');
+    else if (writingMode === 'vertical-lr-maya') document.body.classList.add('vertical-lr-maya');
+    else if (writingMode === 'horizontal-rtl') document.body.classList.add('horizontal-rtl');
+    else if (writingMode === 'horizontal-ltr') document.body.classList.add('horizontal-ltr');
+
+    // 3. 테마 적용
+    const root = document.documentElement;
+    if (theme === 'dark') {
+        root.style.setProperty('--bg-color', '#222');
+        root.style.setProperty('--white', '#333');
+        root.style.setProperty('--text-color', '#fff');
+        root.style.setProperty('--gray-light', '#444');
+        root.style.setProperty('--gray-text', '#d0d0d0');
+    } else {
+        root.style.setProperty('--bg-color', '#f4f6f8');
+        root.style.setProperty('--white', '#ffffff');
+        root.style.setProperty('--text-color', '#333');
+        root.style.setProperty('--gray-light', '#e0e0e0');
+        root.style.setProperty('--gray-text', '#666');
+    }
+}
+
+if (btnApply) {
+    btnApply.addEventListener('click', () => { applySettings(); alert('설정이 적용되었습니다.'); });
+}
+if (btnOk) {
+    btnOk.addEventListener('click', () => { applySettings(); settingModal.classList.remove('show'); });
 }
 
 /* ==========================================================================
@@ -296,134 +191,171 @@ function clearAllFiles(resetInput) {
     }
 }
 
-/* ==============================================
-   예시값 자동 입력 기능
-   ============================================== */
-const btnExample = document.getElementById('btnExample');
-
-if (btnExample) {
-    btnExample.addEventListener('click', () => {
-        const titleInput = document.getElementById('reportTitle');
-        const detailInput = document.getElementById('reportDetail');
-
-        // 이미 내용이 있다면 덮어쓸지 물어보기
-        if (titleInput.value.trim() !== '' || detailInput.value.trim() !== '') {
-            if (!confirm('현재 입력된 내용을 지우고 예시 데이터를 입력하시겠습니까?')) {
-                return;
-            }
-        }
-
-        // 예시 데이터 입력
-        titleInput.value = "2024년 상반기 AI 서비스 도입 타당성 검토 보고서";
-        detailInput.value = `- 목적: 사내 업무 효율화를 위한 생성형 AI 도입 필요성 분석\n- 주요 내용:\n  1. 국내외 도입 사례 및 효과 분석\n  2. 예상 비용 및 ROI(투자 대비 효과) 산출\n  3. 보안 리스크 및 대응 방안\n- 결론: 3분기 내 시범 도입 추천`;
-        
-        // 입력창으로 포커스 이동 효과
-        detailInput.focus();
-    });
-}
-
 /* ==========================================================================
-   5. 음성 녹음기 (Voice Recorder) 로직
+   3. 보고서 생성 (채팅) 로직
    ========================================================================== */
-const voiceUi = document.getElementById('voiceRecorderUi');
-const btnVoice = document.getElementById('btnVoiceRecord');
-const btnStop = document.getElementById('stopRecordBtn');
-let recordInterval;
-
-btnVoice.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (voiceUi.style.display === 'flex') closeRecorder();
-    else openRecorder();
-});
-
-function openRecorder() {
-    voiceUi.style.display = 'flex';
-    let sec = 0;
-    const timerElem = document.getElementById('recordTimer');
-    timerElem.innerText = "00:00";
-    clearInterval(recordInterval);
-    recordInterval = setInterval(() => {
-        sec++;
-        const min = Math.floor(sec / 60).toString().padStart(2, '0');
-        const s = (sec % 60).toString().padStart(2, '0');
-        timerElem.innerText = `${min}:${s}`;
-    }, 1000);
-}
-
-function closeRecorder() {
-    voiceUi.style.display = 'none';
-    clearInterval(recordInterval);
-}
-
-btnStop.addEventListener('click', () => {
-    closeRecorder();
-    const fakeAudio = new File(["dummy"], `녹음_${new Date().toLocaleTimeString()}.mp3`, {type: "audio/mp3"});
-    filesData.audio.push(fakeAudio);
+function clearAllFiles(resetInput) {
+    filesData.image = [];
+    filesData.audio = [];
+    filesData.file = [];
     updateFileStatus();
-    renderFileList();
-    fileListArea.classList.add('active');
-});
-
-window.addEventListener('click', (e) => {
-    if (!voiceUi.contains(e.target) && e.target !== btnVoice && !btnVoice.contains(e.target)) {
-        if(voiceUi.style.display === 'flex') closeRecorder();
+    if (resetInput) {
+        realFileInput.value = '';
+        realImageInput.value = '';
     }
-});
+}
 
-
-/* ==========================================================================
-   6. 설정(Settings) 및 다국어 쓰기 모드 로직
-   ========================================================================== */
-const settingModal = document.getElementById('settingModal');
-// 설정 버튼 찾기 (하단 상태바)
-const openSettingBtn = document.querySelector('.status-btn[title="화면 설정"]');
-const closeModalX = document.getElementById('closeModalX');
-const btnCancel = document.getElementById('btnCancel');
-const btnApply = document.getElementById('btnApply');
-const btnOk = document.getElementById('btnOk');
-
-if (openSettingBtn) openSettingBtn.addEventListener('click', () => settingModal.classList.add('show'));
-if (closeModalX) closeModalX.addEventListener('click', () => settingModal.classList.remove('show'));
-if (btnCancel) btnCancel.addEventListener('click', () => settingModal.classList.remove('show'));
-
-// [핵심] 설정 적용 함수 (CSS 리팩토링 대응)
-function applySettings() {
-    const writingMode = document.getElementById('writingModeSelect').value;
-    const theme = document.getElementById('themeSelect').value;
-
-    // 1. 클래스 초기화
-    document.body.classList.remove(
-        'vertical-rl', 'vertical-lr-mongolian', 'vertical-lr-maya',
-        'horizontal-rtl', 'horizontal-ltr'
-    );
-
-    // 2. 쓰기 모드 적용
-    if (writingMode === 'vertical-rl') document.body.classList.add('vertical-rl');
-    else if (writingMode === 'vertical-lr-mongolian') document.body.classList.add('vertical-lr-mongolian');
-    else if (writingMode === 'vertical-lr-maya') document.body.classList.add('vertical-lr-maya');
-    else if (writingMode === 'horizontal-rtl') document.body.classList.add('horizontal-rtl');
-    else if (writingMode === 'horizontal-ltr') document.body.classList.add('horizontal-ltr');
-
-    // 3. 테마 적용
-    const root = document.documentElement;
-    if (theme === 'dark') {
-        root.style.setProperty('--bg-color', '#222');
-        root.style.setProperty('--white', '#333');
-        root.style.setProperty('--text-color', '#fff');
-        root.style.setProperty('--gray-light', '#444');
-        root.style.setProperty('--gray-text', '#d0d0d0');
+function updateFileStatus() {
+    const totalCount = filesData.image.length + filesData.audio.length + filesData.file.length;
+    if (totalCount > 0) {
+        fileStatusArea.style.display = 'flex';
     } else {
-        root.style.setProperty('--bg-color', '#f4f6f8');
-        root.style.setProperty('--white', '#ffffff');
-        root.style.setProperty('--text-color', '#333');
-        root.style.setProperty('--gray-light', '#e0e0e0');
-        root.style.setProperty('--gray-text', '#666');
+        fileStatusArea.style.display = 'none';
+        fileListArea.classList.remove('active');
     }
+    document.getElementById('countImage').innerText = filesData.image.length;
+    document.getElementById('countAudio').innerText = filesData.audio.length;
+    document.getElementById('countFile').innerText = filesData.file.length;
 }
 
-if (btnApply) {
-    btnApply.addEventListener('click', () => { applySettings(); alert('설정이 적용되었습니다.'); });
+// 첨부파일이 있을 경우 말풍선에 표시하는 헬퍼 함수
+function getAttachedFileSummary() {
+    const imgCnt = filesData.image.length;
+    const audCnt = filesData.audio.length;
+    const fileCnt = filesData.file.length;
+    if (imgCnt + audCnt + fileCnt === 0) return '';
+
+    return `
+        <div style="margin-top:8px; font-size:0.85rem; opacity:0.9; border-top:1px solid rgba(255,255,255,0.3); padding-top:5px;">
+            <i class="fas fa-paperclip"></i> 첨부: 
+            ${imgCnt ? `이미지 ${imgCnt}개 ` : ''}
+            ${audCnt ? `음성 ${audCnt}개 ` : ''}
+            ${fileCnt ? `파일 ${fileCnt}개` : ''}
+        </div>
+    `;
 }
-if (btnOk) {
-    btnOk.addEventListener('click', () => { applySettings(); settingModal.classList.remove('show'); });
+
+// 엔터키 전송
+document.getElementById('reportTitle').addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') generateReport();
+});
+
+async function generateReport() {
+    const titleInput = document.getElementById('reportTitle');
+    const detailInput = document.getElementById('reportDetail');
+    const fileInput = document.getElementById('pdf-file');
+    // const chatContainer = document.getElementById('chat-box'); // 또는 기존의 chatContainer
+
+    const title = titleInput.value.trim();
+    const detail = detailInput.value.trim();
+
+    // 1. 유효성 검사
+    if (!title) {
+        alert("보고서 주제를 입력해주세요!");
+        titleInput.focus();
+        return;
+    }
+
+    // 2. 사용자 메시지 화면에 표시
+    const userHtml = `
+        <div class="message-row user">
+            <div class="bubble user-bubble">
+                <strong>${title}</strong><br>
+                ${detail ? detail.replace(/\n/g, '<br>') : ''}
+                ${typeof getAttachedFileSummary === 'function' ? getAttachedFileSummary() : ''}
+            </div>
+        </div>
+    `;
+    chatContainer.insertAdjacentHTML('afterbegin', userHtml);
+
+    // 3. 로딩 표시 시작
+    const loadingId = 'loading-' + Date.now();
+    const loadingHtml = `
+        <div class="message-row ai" id="${loadingId}">
+            <div class="bubble ai-bubble">
+                <div class="loading-dots">
+                    <span></span><span></span><span></span>
+                    &nbsp; <strong>AI</strong>가 작성 중입니다...
+                </div>
+            </div>
+        </div>
+    `;
+    chatContainer.insertAdjacentHTML('afterbegin', loadingHtml);
+
+    // 4. 데이터 준비 (FormData)
+    // const formData = new FormData();
+    // formData.append('title', title);
+    // formData.append('detail', detail);
+    // formData.append('model', currentModel); // 선택된 모델 정보 추가
+
+    // // [수정 포인트] filesData에 저장된 모든 파일을 formData에 추가
+    // // 일반 파일(PDF 포함) 추가
+    // filesData.file.forEach((file) => {
+    //     formData.append('pdfFile', file); // 서버에서 받는 키값에 맞춰 수정
+    // });
+    
+    // // 이미지 파일도 필요하다면 추가
+    // filesData.image.forEach((file) => {
+    //     formData.append('images', file);
+    // });
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('detail', detail);
+    formData.append('model', currentModel); // 현재 선택된 gpt, gemini 등의 모델명
+
+    // [핵심] 여러 개의 PDF/일반 파일 처리
+    if (filesData.file && filesData.file.length > 0) {
+        filesData.file.forEach((file) => {
+            // 서버의 Multer가 'pdfFiles'라는 이름으로 여러 장을 받도록 설정되어야 함
+            formData.append('pdfFile', file); 
+        });
+    }
+
+    // [핵심] 이미지 파일도 여러 장이 있다면 포함
+    if (filesData.image && filesData.image.length > 0) {
+        filesData.image.forEach((file) => {
+            formData.append('images', file);
+        });
+    }
+
+    try {
+        const response = await fetch('/chat', {
+            method: 'POST',
+            body: formData  // 이제 진짜 파일이 포함되어 전송됩니다.
+        });
+
+        if (!response.ok) throw new Error('서버 응답 오류');
+
+        const data = await response.json();
+
+        // 6. 로딩 제거 및 AI 답변 출력
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) loadingElement.remove();
+
+        const aiResponseHtml = `
+            <div class="message-row ai">
+                <div class="bubble ai-bubble">
+                    ${data.reply}
+                </div>
+            </div>
+        `;
+        chatContainer.insertAdjacentHTML('afterbegin', aiResponseHtml);
+
+    } catch (error) {
+        console.error('에러 발생:', error);
+        const loadingElement = document.getElementById(loadingId);
+        if (loadingElement) loadingElement.remove();
+        
+        chatContainer.insertAdjacentHTML('afterbegin', `
+            <div class="message-row ai">
+                <div class="bubble ai-bubble" style="color:red">
+                    오류가 발생했습니다. 다시 시도해주세요.
+                </div>
+            </div>
+        `);
+    } finally {
+        if (fileInput) fileInput.value = '';
+        if (typeof clearAllFiles === 'function') clearAllFiles(false);
+    }
 }
