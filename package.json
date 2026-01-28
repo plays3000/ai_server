@@ -20,7 +20,8 @@
     "multer": "^2.0.2",
     "mysql": "^2.18.1",
     "mysql2": "^3.16.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "ts-node": "^10.9.2",

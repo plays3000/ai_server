@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>엑셀 템플릿 데모</title>
+    <script src="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable/dist/handsontable.full.min.css">
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        #container { width: 100%; height: 600px; margin-top: 20px; }
+        button { margin: 10px 5px; padding: 10px 20px; cursor: pointer; }
+        .section { margin-bottom: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        input[type="number"], input[type="text"] { padding: 8px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>엑셀 템플릿 데모</h1>
+    
+    <div class="section">
+        <h3>1단계: 템플릿 업로드</h3>
+        <input type="number" id="uploadTenantId" placeholder="회사 ID" value="1">
+        <input type="text" id="templateName" placeholder="템플릿 이름">
+        <input type="file" id="templateFile" accept=".xlsx,.xls">
+        <button onclick="uploadTemplate()">템플릿 업로드</button>
+        <div id="uploadResult" style="margin-top: 10px; color: green;"></div>
+    </div>
+    
+    <div class="section">
+        <h3>2단계: 템플릿 불러오기</h3>
+        <label>템플릿 ID: </label>
+        <input type="number" id="templateId" placeholder="템플릿 ID" value="1">
+        <button onclick="loadTemplate()">템플릿 불러오기</button>
+        <div id="loadResult" style="margin-top: 10px; color: blue;"></div>
+    </div>
+    
+    <div class="section">
+        <h3>3단계: 작성한 엑셀 업로드 (자동 채우기)</h3>
+        <input type="file" id="userFile" accept=".xlsx,.xls">
+        <button onclick="autoFill()">자동 채우기</button>
+        <div id="fillResult" style="margin-top: 10px; color: green;"></div>
+    </div>
+    
+    <h2 id="title">엑셀 뷰어</h2>
+    <div id="container"></div>
+    
+    <script>
+        let hot;
+        let currentTemplateId;
+        
+        // 1단계: 템플릿 업로드
+        async function uploadTemplate() {
+            const tenantId = document.getElementById('uploadTenantId').value;
+            const name = document.getElementById('templateName').value;
+            const fileInput = document.getElementById('templateFile');
+            
+            if (!fileInput.files[0]) {
+                alert('템플릿 파일을 선택하세요!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('tenant_id', tenantId);
+            formData.append('name', name);
+            formData.append('template', fileInput.files[0]);
+            
+            const res = await fetch('/excel/templates', {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            
+            document.getElementById('uploadResult').innerText = 
+                `✅ 업로드 성공! 템플릿 ID: ${result.template_id}`;
+            
+            // 업로드 성공 시 자동으로 ID 입력
+            document.getElementById('templateId').value = result.template_id;
+            
+            fileInput.value = '';
+        }
+        
+        // 2단계: 템플릿 불러오기
+        async function loadTemplate() {
+            const templateId = document.getElementById('templateId').value;
+            currentTemplateId = templateId;
+            
+            const res = await fetch(`/excel/template/view/${templateId}`);
+            const result = await res.json();
+            
+            document.getElementById('title').innerText = `📄 ${result.templateName}`;
+            document.getElementById('loadResult').innerText = '✅ 템플릿 불러오기 완료!';
+            
+            renderExcel(result.data, result.mergeCells);
+        }
+        
+        // 3단계: 자동 채우기
+        async function autoFill() {
+            if (!currentTemplateId) {
+                alert('먼저 2단계에서 템플릿을 불러오세요!');
+                return;
+            }
+            
+            const fileInput = document.getElementById('userFile');
+            if (!fileInput.files[0]) {
+                alert('작성한 엑셀 파일을 선택하세요!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('userFile', fileInput.files[0]);
+            
+            const res = await fetch(`/excel/template/autofill/${currentTemplateId}`, {
+                method: 'POST',
+                body: formData
+            });
+            const result = await res.json();
+            
+            renderExcel(result.data, result.mergeCells);
+            
+            document.getElementById('fillResult').innerText = '✅ 자동 채우기 완료!';
+            
+            fileInput.value = '';
+        }
+
+        function renderExcel(data, mergeCells) {
+            const container = document.getElementById('container');
+            
+            if (hot) {
+                hot.destroy();
+            }
+            
+            hot = new Handsontable(container, {
+                data: data,
+                colHeaders: true,
+                rowHeaders: true,
+                width: '100%',
+                height: 600,
+                mergeCells: mergeCells,
+                licenseKey: 'non-commercial-and-evaluation'
+            });
+        }
+    </script>
+</body>
+</html>
