@@ -6,6 +6,7 @@ import fs from 'fs';
 import 'dotenv/config';
 import { pool, connectToDatabase } from './config/dbConfig.js';
 import { model } from './config/geminiConfig.js';
+import excelRouter from './routes/excel.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,6 +26,8 @@ connectToDatabase();
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "/public")));
 app.use(express.static(path.join(__dirname, "/node_modules")));
+
+app.use('/excel', excelRouter);
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'views', 'index.html'));
