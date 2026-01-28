@@ -1,35 +1,4 @@
-const input = document.getElementById('user-input');
-const chatBox = document.getElementById('chat-box');
-const sendBtn = document.querySelector('button'); // 전송 버튼 선택
 
-// async function sendMessage() {
-//     const userInput = document.getElementById('user-input');
-//     const chatBox = document.getElementById('chat-box');
-//     const fileInput = document.getElementById('pdf-file')
-//     const message = userInput.value;
-
-//     if (!message) return;
-
-//     // 내 메시지 화면에 추가
-//     chatBox.innerHTML += `<div class="user"><b>나:</b> ${message}</div>`;
-//     userInput.value = '';
-
-//     try {
-//         const response = await fetch('/chat', {
-//             method: 'POST',
-//             headers: { 'Content-Type': 'application/json' },
-//             body: JSON.stringify({ message })
-//         });
-
-//         const data = await response.json();
-//         // AI 답변 화면에 추가
-//         chatBox.innerHTML += `<div class="bot"><b>AI:</b> ${data.reply}</div>`;
-//         chatBox.scrollTop = chatBox.scrollHeight;
-//     } catch (error) {
-//         console.error('에러 발생:', error);
-//         chatBox.innerHTML += `<div style="color:red">서버와 연결할 수 없습니다.</div>`;
-//     }
-// }
 async function sendMessage() {
     const userInput = document.getElementById('user-input');
     const chatBox = document.getElementById('chat-box');

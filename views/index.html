@@ -2,26 +2,166 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Gemini Chat</title>
-    <style>
-        #chat-box { height: 300px; overflow-y: scroll; border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; }
-        .user { color: blue; }
-        .bot { color: green; margin-bottom: 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI기반보고서생성기</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css"> 
 </head>
 <body>
-    <h1>안녕하십니까. AI산업 진흥원입니다! 🏠</h1>
-    <p>이 페이지는 메인 페이지입니다.</p>
-    <h1>Gemini AI Chatbot</h1>
-    <input type="text" id="user-input" placeholder="메시지를 입력하세요...">
-    <input type="file" id="pdf-file" accept=".pdf">
-    <button onclick="sendMessage()">전송</button>
-    <div id="chat-box"></div>
-    <nav>
-        <a href="/">홈으로</a> | 
-        <a href="/about">회사 소개</a> | 
-        <a href="/contact">연락처</a>
-    </nav>
+    <header>
+        <h1><i class="fas fa-robot"></i> AI기반보고서생성기</h1>
+        <button id="resetBtn" class="reset-btn" title="대화 초기화">
+            <i class="fas fa-trash-alt"></i> 초기화
+        </button>
+    </header>
+
+    <div class="output-result-stack" id="chatContainer">
+        <div class="message-row ai">
+            <div class="bubble ai-bubble">
+                <i class="fas fa-info-circle"></i> 안녕하세요! 작성하고 싶은 보고서의 주제와 상세 내용을 입력해주세요.
+            </div>
+        </div>
+    </div>
+
+    <div class="input-container-wrapper">
+        <div class="input-box">
+            <div class="file-upload-status" id="fileStatusArea" style="display: none;">
+                <div class="status-item" data-type="image" title="이미지 목록 보기">
+                    <i class="fas fa-images"></i> <span id="countImage">0</span>
+                </div>
+                <div class="status-item" data-type="audio" title="오디오 목록 보기">
+                    <i class="fas fa-volume-up"></i> <span id="countAudio">0</span>
+                </div>
+                <div class="status-item" data-type="file" title="일반 파일 목록 보기">
+                    <i class="fas fa-paperclip"></i> <span id="countFile">0</span>
+                </div>
+                <div class="status-close" id="clearAllFiles" title="모두 삭제">&times;</div>
+            </div>
+
+            <div class="upload-files-list" id="fileListArea">
+                </div>
+
+            <div class="voice-recorder" id="voiceRecorderUi">
+                <div class="recorder-visualizer">
+                    <span></span><span></span><span></span><span></span><span></span>
+                </div>
+                <div class="recorder-timer" id="recordTimer">00:00</div>
+                <button class="stop-record-btn" id="stopRecordBtn" title="녹음 완료">
+                    <i class="fas fa-stop"></i>
+                </button>
+            </div>
+
+            <div class="main-input-group">
+                <input type="text" id="reportTitle" placeholder="보고서 주제 또는 제목을 입력하세요..." />
+                <button class="generate-btn" onclick="generateReport()">
+                    <i class="fas fa-paper-plane"></i> 생성
+                </button>
+            </div>
+
+            <div class="detail-description">
+                <textarea id="reportDetail" placeholder="여기에 상세 요구사항이나 추가 설명을 입력하세요 (선택사항)"></textarea>
+                
+                <button class="example-btn" id="btnExample" title="예시 데이터 자동 입력">
+                    <i class="fas fa-magic"></i><br>예시값
+                </button>
+            </div>
+
+            <div class="toolbar">
+                <div class="icon-group left">
+                    <div class="icon-btn"><i class="fas fa-chart-line"></i><span>재무</span></div>
+                    <div class="icon-btn"><i class="fas fa-calculator"></i><span>회계</span></div>
+                    <div class="icon-btn"><i class="fas fa-users"></i><span>인사</span></div>
+                    <div class="icon-btn"><i class="fas fa-plus-circle"></i></div>
+                </div>
+                
+                <div class="icon-group right">
+                    <input type="file" id="realFileInput" hidden multiple>
+                    <input type="file" id="realImageInput" hidden accept="image/*" multiple>
+
+                    <div class="icon-btn" id="btnAttachFile">
+                        <i class="fas fa-paperclip"></i><span>파일</span>
+                    </div>
+                    <div class="icon-btn" id="btnAttachImage">
+                        <i class="fas fa-image"></i><span>이미지</span>
+                    </div>
+                    <div class="icon-btn" id="btnVoiceRecord">
+                        <i class="fas fa-microphone"></i><span>음성</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- <div class="model-selector">
+                <div class="model-chip active" data-model="gpt">GPT-5</div>
+                <div class="model-chip" data-model="gemini">Gemini 3</div>
+                <div class="model-chip" data-model="claude">Claude Sonnet 4</div>
+                <div class="model-chip" data-model="llama">LLAMA 4</div>
+                <div class="model-chip" data-model="deepseek">Deepseek</div>
+            </div> -->
+            
+            <div class="status-bar">
+                <div class="status-left">
+                    <i class="far fa-clock"></i> <span id="realTimeClock">00:00:00</span>
+                </div>
+                <div class="status-right">
+                    <button class="status-btn" title="언어 선택"><i class="fas fa-globe"></i> 한국어</button>
+                    <button class="status-btn" title="화면 설정"><i class="fas fa-cog"></i> 설정</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settingModal" class="modal-overlay">
+        <div class="modal-window">
+            
+            <div class="modal-header">
+                <h2>환경설정</h2>
+                <span class="close-btn" id="closeModalX">&times;</span>
+            </div>
+
+            <div class="modal-body">
+                <div class="setting-row">
+                    <label>화면테마</label>
+                    <select id="themeSelect">
+                        <option value="light">밝은 모드</option>
+                        <option value="dark">어두운 모드</option>
+                        <option value="blue">시스템기본</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label>표시언어</label>
+                    <select id="langSelect">
+                        <option value="en">English</option>
+                        <option value="ko">한국어</option>
+                        <option value="zh">中文</option>
+                        <option value="ja">日本語</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <label>쓰기방향</label>
+                    <select id="writingModeSelect">
+                        <option value="horizontal-ltr">가로쓰기 (좌 → 우: 라틴/키릴/그리스/아르메니아/조지아)</option>
+                        <option value="horizontal-rtl">가로쓰기 (우 → 좌: 아람/히브리/수리야/디베히)</option>
+                        <option value="vertical-rl">세로쓰기 (우 → 좌: 한/중/일/녀진/거란)</option>
+                        <option value="vertical-lr-mongolian">세로쓰기 (좌 → 우: 몽골/만주)</option>
+                        <option value="vertical-lr-maya">세로쓰기 (좌 → 우: 마야/블록)</option>
+                    </select>
+                    <p class="description">
+                        ※ 언어별 문법에 맞는 줄바꿈방향을 선택하세요.
+                    </p>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button id="btnApply" class="btn-secondary">적용</button>
+                <button id="btnCancel" class="btn-secondary">취소</button>
+                <button id="btnOk" class="btn-primary">확인</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="/scripts/script.js"></script>
 </body>
-<script src="/scripts.js"></script>
 </html>

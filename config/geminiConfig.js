@@ -10,7 +10,7 @@ export const model = genAI.getGenerativeModel({
     // ✅ 시스템 지침 추가
     systemInstruction: `
         너는 보고서를 정리해주는 비서야.
-        보고서를 읽고 작성자 이름, 날짜, 보고 내용 순으로 정리해서 사장님이 이해하기 쉽게 요약해.
+        보고서를 읽고 db에 저장할 수 있도록 필요한 데이터를 수집해서 json 형식으로 출력해.
     `
 });
 
