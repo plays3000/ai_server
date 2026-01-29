@@ -1,37 +1,28 @@
 {
   "compilerOptions": {
+    /* 1. 환경 설정: Node.js 최신 환경에 맞춤 */
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "esModuleInterop": true,
-    "allowJs": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    "rootDir": "./",
+    /* 2. 구조 정리: 소스는 src, 결과물은 dist */
+    "rootDir": "./src",
     "outDir": "./dist",
-    "sourceMap": true,
-    "declaration": true,
-    "declarationMap": true,
+    "allowJs": true,           /* JS 파일을 TS로 옮기는 과정에서 필수 */
+    "checkJs": false,          /* JS 파일의 타입 에러까지는 체크 안 함 (과도기용) */
 
+    /* 3. 엄격도: 장기적인 안정성을 위해 유지 */
     "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true, // 엄격하게 관리하려면 유지
-    "isolatedModules": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
+    "noUncheckedIndexedAccess": true, /* 기존에 있던 좋은 엄격 옵션 유지 */
+    "sourceMap": true,
 
-    "jsx": "react-jsx"
+    /* 4. 기타 불필요한 설정 제거 */
+    // jsx: "react-jsx" -> 현재 EJS를 사용 중이므로 리액트를 안 쓴다면 제거하는 게 깔끔합니다.
+    "isolatedModules": true
   },
-  "include": [
-    "server.ts",
-    "routes/**/*.ts",
-    "config/**/*.ts",
-    "types/**/*.ts",
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src/**/*"],     /* src 폴더 내 모든 것만 관리 대상 */
+  "exclude": ["node_modules", "dist"]
 }

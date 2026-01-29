@@ -1,16 +1,17 @@
-import express, { type Request, type Response } from 'express';import path from 'path';
+import express, { type Request, type Response } from 'express';
+import path from 'path';
 import { fileURLToPath } from 'url';
 import multer from 'multer';
 import fs from 'fs';
 import 'dotenv/config';
 
-// 기존 .js 참조를 모두 소스 코드(.ts 또는 .js) 기준으로 변경
+// 설정 및 라우터 임포트 (src 내 동일 계층 이동으로 상대 경로는 유지됨)
 import { pool, connectToDatabase } from './config/dbConfig.js';
 import { model } from './config/geminiConfig.js';
 import excelRouter from './routes/excel.js';
-import authRouter from './routes/auth.js'; // dist 참조 제거
+import authRouter from './routes/auth.js';
 import session from 'express-session';
-import passport from './config/passportConfig.js'; // dist 참조 제거
+import passport from './config/passportConfig.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,21 +19,23 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = Number(process.env.PORT) || 3000;
 
-// 업로드 폴더 생성 로직 유지
-if (!fs.existsSync('uploads/')) {
-    fs.mkdirSync('uploads/');
-}
-
-const upload = multer({ dest: 'uploads/' });
-
+// 데이터베이스 연결
 connectToDatabase();
 
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
+// 업로드 폴더 생성
+const uploadDir = 'uploads/';
+if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir);
+}
+const upload = multer({ dest: uploadDir });
 
+// 뷰 엔진 설정 (절대 경로 유지)
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, '../views')); // src/ 내부로 이동했으므로 한 단계 상위의 views 참조
+
+// 미들웨어 설정
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
-app.use(express.static(path.join(__dirname, "node_modules")));
+app.use(express.static(path.join(__dirname, "../public"))); // src/ 내부에서 상위 public 참조
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'session-secret',
@@ -48,11 +51,12 @@ app.use(passport.session());
 app.use('/excel', excelRouter);
 app.use('/auth', authRouter);
 
+// 기본 페이지
 app.get('/', (req: Request, res: Response) => {
   res.render('report-generator-chatbot/chatbot');
 });
 
-// 채팅 로직 (기존 통합된 로직 유지하되 타입 지정)
+// 채팅 분석 로직
 app.post('/chat', upload.fields([
     { name: 'pdfFile', maxCount: 10 },
     { name: 'images', maxCount: 10 }
@@ -62,9 +66,11 @@ app.post('/chat', upload.fields([
         const userMessage = `${title}\n${detail || ''}`;
         const chatInputs: any[] = [{ text: userMessage }];
 
-        const processFiles = (files: any, defaultMime: string) => {
-            if (!files) return;
-            files.forEach((file: any) => {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        
+        const processFiles = (fileArray: Express.Multer.File[] | undefined, defaultMime: string) => {
+            if (!fileArray) return;
+            fileArray.forEach(file => {
                 chatInputs.push({
                     inlineData: {
                         data: fs.readFileSync(file.path).toString("base64"),
@@ -75,7 +81,6 @@ app.post('/chat', upload.fields([
             });
         };
 
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
         processFiles(files['pdfFile'], "application/pdf");
         processFiles(files['images'], "image/jpeg");
 

@@ -5,9 +5,9 @@
   "license": "ISC",
   "author": "",
   "type": "module",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node --esm server.ts",
+    "dev": "ts-node --esm src/server.ts",
     "build": "tsc --build",
     "start": "node dist/server.js",
     "clean": "tsc --build --clean",
