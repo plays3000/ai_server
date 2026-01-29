@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node --esm src/server.ts",
+    "setup": "npm install && npm run build", 
     "build": "npm run build:client && npm run build:server",
     "build:client": "webpack",
     "build:server": "tsc --build",

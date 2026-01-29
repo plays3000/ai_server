@@ -1,4 +1,4 @@
-import express, { type Request, type Response } from 'express';
+import express, { type Request, type Response, type NextFunction } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
@@ -54,4 +54,10 @@ app.get('/', (req: Request, res: Response) => {
 // 서버 실행
 app.listen(port, () => {
     console.log(`🚀 서버 실행 중: http://localhost:${port}`);
+});
+
+// 어떤 상황에서도 서버가 죽지 않게 하기위한 함수
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    console.error(err.stack);
+    res.status(500).json({ success: false, message: '서버 내부 오류가 발생했습니다.' });
 });
