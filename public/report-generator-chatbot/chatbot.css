@@ -1,0 +1,140 @@
+/* ==========================================================================
+   1. 기본 변수 및 초기화 (Base & Variables)
+   ========================================================================== */
+:root {
+    --primary-color: #007bff;
+    --bg-color: #f4f6f8;
+    --white: #ffffff;
+    --text-color: #333;
+    --gray-light: #e0e0e0;
+    --gray-dark: #444;
+    --gray-text: #888; /* 기본 회색 텍스트 색상 */
+    --input-bg-color: var(--white);
+    --bubble-ai-bg-color: var(--white);
+    --bubble-ai-text-color: var(--text-color);
+    --footer-text-color: var(--gray-text);
+    --file-list-bg-color: var(--white);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', AppleSDGothicNeo, sans-serif;
+    background-color: var(--bg-color);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    color: var(--text-color);
+    transition: background 0.3s;
+}
+
+/* 채팅 출력 영역 (기본값) */
+.output-result-stack {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column-reverse; 
+    gap: 15px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* 말풍선 스타일 */
+.message-row { display: flex; width: 100%; margin-bottom: 5px; }
+.message-row.user { justify-content: flex-end; }
+.message-row.ai { justify-content: flex-start; }
+
+.bubble {
+    max-width: 80%;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.bubble.user-bubble {
+    background-color: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 2px;
+}
+.bubble.user-bubble strong {
+    display: block; margin-bottom: 5px; font-size: 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;
+}
+
+.bubble.ai-bubble {
+    background-color: var(--bubble-ai-bg-color);
+    color: var(--bubble-ai-text-color);
+    border: 1px solid var(--gray-light);
+    border-bottom-left-radius: 2px;
+}
+
+/* 로딩 애니메이션 */
+.loading-dots span {
+    display: inline-block; width: 8px; height: 8px;
+    background-color: #888; border-radius: 50%; margin: 0 2px;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
+/* [추가] 말풍선 내부 첨부파일 영역 */
+.msg-attachment-area {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* 이미지/비디오 그리드 (2개 이상일 때 예쁘게 정렬) */
+.msg-media-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.msg-media-item {
+    max-width: 100%;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    object-fit: cover;
+}
+/* 이미지가 여러 개면 크기 조절 (선택사항) */
+.msg-media-grid > img, 
+.msg-media-grid > video {
+    max-width: 200px; 
+    max-height: 200px;
+}
+
+/* 일반 파일 목록 스타일 */
+.msg-file-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.msg-file-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0,0,0,0.05); /* 연한 배경 */
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: inherit; /* 부모 글자색 상속 */
+}
+
+.msg-file-item i {
+    font-size: 1.1rem;
+    opacity: 0.7;
+}
+
+/* 다크모드/사용자 말풍선에서의 파일 가독성 확보 */
+.user-bubble .msg-file-item {
+    background: rgba(255,255,255,0.2);
+    color: white;
+}

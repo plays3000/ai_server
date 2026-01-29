@@ -1,0 +1,31 @@
+<div id="settingModal" class="modal-overlay">
+    <div class="modal-window">
+        <div class="modal-header">
+            <h2>환경설정</h2>
+            <span class="close-btn" id="closeModalX">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="setting-row">
+                <label>화면테마</label>
+                <select id="themeSelect">
+                    <option value="light">밝은 모드 (Light)</option>
+                    <option value="dark">어두운 모드 (Dark)</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label>쓰기 방향 (Writing Mode)</label>
+                <select id="writingModeSelect">
+                    <option value="horizontal-ltr">가로쓰기 (좌 → 우: 기본)</option>
+                    <option value="horizontal-rtl">가로쓰기 (우 → 좌: 아람/히브리)</option>
+                    <option value="vertical-rl">세로쓰기 (우 → 좌: 한/중/일)</option>
+                    <option value="vertical-lr-mongolian">세로쓰기 (좌 → 우: 몽골/만주)</option>
+                    <option value="vertical-lr-maya">세로쓰기 (좌 → 우: 마야/블록)</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="btnApply" class="btn-secondary">적용</button>
+            <button id="btnOk" class="btn-primary">확인</button>
+        </div>
+    </div>
+</div>

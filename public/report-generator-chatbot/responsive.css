@@ -1,0 +1,118 @@
+/* ==========================================================================
+   반응형 웹 (Mobile & Tablet) - max-width: 768px
+   ========================================================================== */
+@media screen and (max-width: 768px) {
+
+    /* 1. 전체 레이아웃 & 폰트 */
+    body {
+        font-size: 14px; /* 모바일에서는 글자 크기 약간 축소 */
+    }
+
+    /* 2. 헤더 */
+    header {
+        padding: 15px 10px;
+    }
+    header h1 {
+        font-size: 1.2rem; /* 제목 크기 축소 */
+    }
+    .reset-btn {
+        padding: 5px 8px;
+        font-size: 0.8rem;
+    }
+    .reset-btn span {
+        display: none; /* "초기화" 글자 숨기고 아이콘만 표시 */
+    }
+    .reset-btn i { margin: 0; }
+
+    /* 3. 채팅 영역 */
+    .output-result-stack {
+        padding: 10px;
+        max-width: 100%; /* 너비 꽉 채우기 */
+    }
+    .bubble {
+        max-width: 90%; /* 말풍선 더 넓게 */
+        padding: 10px 12px;
+    }
+
+    /* 4. 입력창 영역 (Input Box) */
+    .input-container-wrapper {
+        padding: 10px; /* 패딩 줄임 */
+    }
+    .input-box {
+        max-width: 100%;
+    }
+
+    /* 메인 입력 그룹 */
+    .main-input-group {
+        gap: 5px;
+    }
+    .generate-btn {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    .generate-btn i { margin: 0; }
+    /* 화면이 너무 좁으면 '생성' 글자 숨기기 (선택사항) */
+    @media (max-width: 380px) {
+        /* .generate-btn { font-size: 0; }  */
+        /* .generate-btn i { font-size: 1rem; } */
+    }
+
+    /* 상세 설명 & 예시 버튼 */
+    .detail-description textarea {
+        height: 60px; /* 높이 줄임 */
+    }
+    .example-btn {
+        width: 50px; /* 버튼 폭 줄임 */
+        font-size: 0.7rem;
+    }
+    .example-btn i { font-size: 1rem; }
+
+    /* 5. 툴바 & 모델 선택 */
+    .toolbar {
+        flex-wrap: wrap; /* 줄바꿈 허용 */
+        gap: 10px;
+    }
+    .icon-group.left {
+        display: none; /* 모바일 공간 부족 시 왼쪽 아이콘(재무/회계 등) 숨김 처리 고려 */
+        /* 또는 flex-grow: 1; 로 조정 */
+    }
+    .icon-group.right {
+        width: 100%;
+        justify-content: space-between; /* 아이콘 간격 벌림 */
+    }
+
+    .model-selector {
+        padding-top: 5px;
+    }
+    .model-chip {
+        padding: 5px 10px;
+        font-size: 0.8rem;
+    }
+
+    /* 6. 하단 상태바 */
+    .status-bar {
+        font-size: 0.75rem;
+        flex-direction: column; /* 세로로 배치 */
+        align-items: flex-start;
+        gap: 5px;
+    }
+    .status-right {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    /* 7. 설정 모달 (Settings Modal) */
+    .modal-window {
+        width: 90%; /* 모바일 화면 너비의 90% */
+        max-width: none;
+    }
+
+    /* 8. 음성 녹음기 */
+    .voice-recorder {
+        width: 90%; /* 화면 꽉 차게 */
+        left: 5% !important; 
+        right: auto !important;
+        bottom: 80px; /* 위치 조정 */
+        justify-content: center;
+    }
+}

@@ -1,5 +1,7 @@
+// [추가됨] 파일 저장소 타입 정의
 export interface FileStore {
     image: File[];
+    video: File[];
     audio: File[];
     file: File[];
 }
@@ -7,10 +9,9 @@ export interface FileStore {
 export interface ChatMessage {
     role: 'user' | 'ai';
     content: string;
-    files?: FileStore;
+    files?: FileStore; // [수정됨] File[] -> FileStore (구조 맞춤)
 }
 
-// 설정 관련 DTO
 export interface AppSettings {
     theme: 'light' | 'dark' | 'blue';
     language: 'en' | 'ko' | 'zh' | 'ja';
