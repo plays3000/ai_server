@@ -1,31 +1,46 @@
 {
-  "name": "webpage",
-  "version": "1.0.0",
-  "description": "",
-  "license": "ISC",
-  "author": "",
+  "name": "ai-report-server",
+  "version": "1.1.0",
+  "description": "AI 기반 보고서 생성 시스템 (Refactored)",
   "type": "module",
-  "main": "server.js",
+  "main": "dist/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc --build",
-    "clean": "tsc --build --clean"
+    "setup": "npm install && npm run build", 
+    "build": "npm run build:client && npm run build:server",
+    "build:client": "webpack",
+    "build:server": "tsc --build",
+    "start": "node dist/server.js",
+    "dev": "ts-node --esm src/server.ts",
+    "clean": "rm -rf dist public/js/*.bundle.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "bcrypt": "^6.0.0",
     "dotenv": "^17.2.3",
     "ejs": "^4.0.1",
     "express": "^5.2.1",
-    "fs": "^0.0.1-security",
+    "express-session": "^1.19.0",
+    "jsonwebtoken": "^9.0.3",
     "multer": "^2.0.2",
-    "mysql": "^2.18.1",
     "mysql2": "^3.16.2",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-naver-v2": "^2.0.8",
     "typescript": "^5.9.3",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^25.1.0",
+    "@types/passport": "^1.0.17",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
-    "webpack": "^5.104.1",
+    "webpack": "^5.90.0",
     "webpack-cli": "^6.0.1"
   }
 }
