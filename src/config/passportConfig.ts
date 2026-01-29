@@ -1,100 +1,149 @@
 import passport from 'passport';
-import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
+import { 
+    Strategy as GoogleStrategy, 
+    type Profile as GoogleProfile, 
+    type VerifyCallback 
+} from 'passport-google-oauth20';
 import { Strategy as NaverStrategy } from 'passport-naver-v2';
 import { pool } from './dbConfig.js';
-import { authConfig } from './authConfig.js';
 import { type User } from '../types/auth.js';
 import { type ResultSetHeader } from 'mysql2';
+import 'dotenv/config';
 
-// 1. 사용자 직렬화 (세션에 ID 저장)
+// 네이버 프로필 타입 정의 (필요한 필드만 추출)
+interface NaverProfile {
+    id: string;
+    email: string;
+    name: string;
+    profile_image: string;
+}
+interface User {
+            id: string,
+            email: string,
+            name: string,
+            provider: string,
+            provider_id: string,
+            profile_image: any
+        };
+
+// 1. 구글 전략 설정
+passport.use(new GoogleStrategy({
+    clientID: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    callbackURL: process.env.GOOGLE_CALLBACK_URL!
+}, async (_accessToken: string, _refreshToken: string, profile: GoogleProfile, done: VerifyCallback) => {
+    try {
+        const email = profile.emails?.[0]?.value;
+        const name = profile.displayName;
+        const profileImage = profile.photos?.[0]?.value;
+
+        // provider_id로 기존 사용자 확인
+        const [users] = await pool.query<User[]>(
+            'SELECT * FROM users WHERE provider = ? AND provider_id = ?',
+            ['google', profile.id]
+        );
+
+        if (users.length > 0 && users[0]) {
+            return done(null, users[0]);
+        }
+
+        // 동일 이메일 존재 여부 확인
+        const [emailUsers] = await pool.query<User[]>(
+            'SELECT * FROM users WHERE email = ?',
+            [email]
+        );
+
+        if (emailUsers.length > 0 && emailUsers[0]) {
+            // 기존 계정에 구글 정보 연동
+            await pool.query(
+                'UPDATE users SET provider = ?, provider_id = ?, profile_image = ? WHERE email = ?',
+                ['google', profile.id, profileImage, email]
+            );
+            
+            const updatedUser = {
+                ...emailUsers[0],
+                provider: 'google',
+                provider_id: profile.id,
+                profile_image: profileImage
+            };
+            
+            return done(null, updatedUser);
+        }
+
+        // 새 사용자 생성
+        const [result] = await pool.query<ResultSetHeader>(
+            'INSERT INTO users (email, name, provider, provider_id, profile_image) VALUES (?, ?, ?, ?, ?)',
+            [email, name, 'google', profile.id, profileImage]
+        );
+
+        const newUser: User = {
+            id: result.insertId,
+            email: email || '',
+            name,
+            provider: 'google',
+            provider_id: profile.id,
+            profile_image: profileImage
+        } as User;
+
+        done(null, newUser);
+    } catch (error) {
+        done(error as Error);
+    }
+}));
+
+// 2. 네이버 전략 설정
+passport.use(new NaverStrategy({
+    clientID: process.env.NAVER_CLIENT_ID!,
+    clientSecret: process.env.NAVER_CLIENT_SECRET!,
+    callbackURL: process.env.NAVER_CALLBACK_URL!
+}, async (_accessToken: string, _refreshToken: string, profile: NaverProfile, done: (error: any, user?: any) => void) => {
+    try {
+        const { id, email, name, profile_image } = profile;
+
+        const [users] = await pool.query<User[]>(
+            'SELECT * FROM users WHERE provider = ? AND provider_id = ?',
+            ['naver', id]
+        );
+
+        if (users.length > 0 && users[0]) {
+            return done(null, users[0]);
+        }
+
+        const [result] = await pool.query<ResultSetHeader>(
+            'INSERT INTO users (email, name, provider, provider_id, profile_image) VALUES (?, ?, ?, ?, ?)',
+            [email, name, 'naver', id, profile_image]
+        );
+
+        const newUser: User = {
+            id: result.insertId,
+            email,
+            name,
+            provider: 'naver',
+            provider_id: id,
+            profile_image: profile_image
+        } as User;
+
+        done(null, newUser);
+    } catch (error) {
+        done(error as Error);
+    }
+}));
+
+// 세션 저장 및 복구
 passport.serializeUser((user: any, done) => {
-    done(null, user.id);
+    done(null, (user as User).id);
 });
 
-// 2. 사용자 역직렬화 (ID로 DB에서 사용자 정보 복구)
 passport.deserializeUser(async (id: number, done) => {
     try {
-        const [users] = await pool.query<User[]>('SELECT * FROM users WHERE id = ?', [id]);
+        const [users] = await pool.query<User[]>(
+            'SELECT id, email, name, provider, profile_image FROM users WHERE id = ?',
+            [id]
+        );
         done(null, users[0] || null);
     } catch (error) {
         done(error);
     }
 });
-
-// 3. 구글 전략 설정
-passport.use(new GoogleStrategy({
-    clientID: authConfig.googleClientId,
-    clientSecret: authConfig.googleClientSecret,
-    callbackURL: "/auth/google/callback"
-}, async (accessToken, refreshToken, profile, done) => {
-    try {
-        const email = profile.emails?.[0]?.value;
-        const name = profile.displayName;
-        const googleId = profile.id;
-
-        if (!email) return done(new Error("구글 계정에 이메일 정보가 없습니다."));
-
-        // 기존 사용자 확인
-        const [existingUsers] = await pool.query<User[]>('SELECT * FROM users WHERE email = ?', [email]);
-        let user = existingUsers[0];
-
-        if (!user) {
-            // 신규 사용자 등록 (기본 워크스페이스 생성)
-            const [companyResult] = await pool.query<ResultSetHeader>(
-                'INSERT INTO companies (name) VALUES (?)',
-                [`${name}의 워크스페이스`]
-            );
-            const companyId = companyResult.insertId;
-
-            const [insertResult] = await pool.query<ResultSetHeader>(
-                'INSERT INTO users (email, name, google_id, company_id, role) VALUES (?, ?, ?, ?, ?)',
-                [email, name, googleId, companyId, 'admin']
-            );
-            
-            const [newUser] = await pool.query<User[]>('SELECT * FROM users WHERE id = ?', [insertResult.insertId]);
-            user = newUser[0]!;
-        }
-
-        return done(null, user);
-    } catch (error) {
-        return done(error);
-    }
-}));
-
-// 4. 네이버 전략 설정
-passport.use(new NaverStrategy({
-    clientID: authConfig.naverClientId,
-    clientSecret: authConfig.naverClientSecret,
-    callbackURL: "/auth/naver/callback"
-}, async (accessToken: string, refreshToken: string, profile: any, done: any) => {
-    try {
-        const email = profile.email;
-        const name = profile.name || profile.nickname;
-        const naverId = profile.id;
-
-        const [existingUsers] = await pool.query<User[]>('SELECT * FROM users WHERE email = ?', [email]);
-        let user = existingUsers[0];
-
-        if (!user) {
-            const [companyResult] = await pool.query<ResultSetHeader>(
-                'INSERT INTO companies (name) VALUES (?)',
-                [`${name}의 워크스페이스`]
-            );
-            const companyId = companyResult.insertId;
-
-            const [insertResult] = await pool.query<ResultSetHeader>(
-                'INSERT INTO users (email, name, naver_id, company_id, role) VALUES (?, ?, ?, ?, ?)',
-                [email, name, naverId, companyId, 'admin']
-            );
-            
-            const [newUser] = await pool.query<User[]>('SELECT * FROM users WHERE id = ?', [insertResult.insertId]);
-            user = newUser[0]!;
-        }
-
-        return done(null, user);
-    } catch (error) {
-        return done(error);
-    }
-}));
 
 export default passport;

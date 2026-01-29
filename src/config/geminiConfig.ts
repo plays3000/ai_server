@@ -1,16 +1,16 @@
-import { GoogleGenerativeAI, type GenerationConfig } from "@google/generative-ai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import 'dotenv/config';
 
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY2;
 
 if (!apiKey) {
-    throw new Error("GEMINI_API_KEY가 환경 변수에 설정되어 있지 않습니다. .env 파일을 확인해주세요.");
+    throw new Error("GEMINI_API_KEY2가 환경 변수에 설정되어 있지 않습니다.");
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
 
-// 1. 설정 객체에 명시적 타입 부여
-export const generationConfig: GenerationConfig = {
+// 직접 타입을 정의하여 할당
+export const generationConfig = {
     temperature: 1,
     topP: 0.95,
     topK: 40,
@@ -18,12 +18,10 @@ export const generationConfig: GenerationConfig = {
     responseMimeType: "text/plain"
 };
 
-// 2. 모델 설정 및 시스템 프롬프트 정의
 export const model = genAI.getGenerativeModel({ 
     model: "gemini-2.5-flash", 
-    generationConfig, // 정의한 설정을 모델에 주입
     systemInstruction: `
         너는 보고서를 정리해주는 비서야.
-        보고서를 읽고 DB에 저장할 수 있도록 필요한 데이터를 수집해서 JSON 형식으로 출력해.
+        보고서를 읽고 db에 저장할 수 있도록 필요한 데이터를 수집해서 json 형식으로 출력해.
     `
 });
