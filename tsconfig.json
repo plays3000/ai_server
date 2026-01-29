@@ -1,0 +1,32 @@
+{
+  "compilerOptions": {
+    // 1. 최신 Node.js ESM 환경 확정
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    // 2. 경로 및 구조 확정
+    "rootDir": "./src",
+    "outDir": "./dist",
+    
+    // [레거시 제거] 이제 모든 코드가 TS이므로 JS 허용 옵션 제거
+    "allowJs": false,
+    "checkJs": false,
+
+    // 3. 엄격한 타입 체크 (안정성 극대화)
+    "strict": true,
+    "noImplicitAny": true,           // 암시적 any 에러 발생
+    "strictNullChecks": true,        // null/undefined 체크 강화
+    "noUncheckedIndexedAccess": true, // 인덱스 접근 시 undefined 가능성 체크
+    "sourceMap": true,               // 디버깅을 위한 소스맵 유지
+    
+    // 4. 모듈 시스템 최적화
+    "isolatedModules": true,
+    "resolveJsonModule": true        // JSON 파일 임포트 허용 (package.json 등 참조용)
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "public"]
+}
