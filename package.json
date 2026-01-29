@@ -5,13 +5,13 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "ts-node --esm src/server.ts",
+    "setup": "npm install && npm run build", 
     "build": "npm run build:client && npm run build:server",
     "build:client": "webpack",
     "build:server": "tsc --build",
     "start": "node dist/server.js",
-    "clean": "rm -rf dist public/js/*.bundle.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "ts-node --esm src/server.ts",
+    "clean": "rm -rf dist public/js/*.bundle.js"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
