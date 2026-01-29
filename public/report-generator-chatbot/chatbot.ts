@@ -67,15 +67,27 @@ class ChatbotApp {
             return;
         }
 
-        this.appendMessage('user', title, this.detailInput.value);
+        // [중요] 파일을 비우기 전에 현재 상태를 복사(Clone)해서 넘겨야 함
+        // 객체 얕은 복사만 해도 File 객체는 참조 유지되므로 OK
+        const currentFiles: FileStore = {
+            image: [...this.filesData.image],
+            video: [...this.filesData.video],
+            audio: [...this.filesData.audio],
+            file: [...this.filesData.file]
+        };
+
+        // 사용자 메시지 추가 (파일 데이터 함께 전달)
+        this.appendMessage('user', title, this.detailInput.value, currentFiles);
 
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
+        // 입력창 및 파일 데이터 초기화
         this.titleInput.value = '';
         this.detailInput.value = '';
-        this.clearFiles();
+        this.clearFiles(); // 여기서 초기화되므로 위에서 복사해둔 currentFiles를 써야 함
 
+        // AI 응답 시뮬레이션
         setTimeout(() => {
             const loadingEl = document.getElementById(loadingId);
             loadingEl?.remove();
@@ -83,15 +95,70 @@ class ChatbotApp {
         }, 2000);
     }
 
-    private appendMessage(role: 'user' | 'ai', title: string, detail: string = ''): void {
+    // files 인자 추가 (FileStore 타입)
+    private appendMessage(role: 'user' | 'ai', title: string, detail: string = '', files?: FileStore): void {
+        
+        // 1. 첨부파일 HTML 생성
+        let attachmentHtml = '';
+        if (files) {
+            attachmentHtml = '<div class="msg-attachment-area">';
+
+            // (A) 이미지 & 비디오 (그리드 형태)
+            const mediaFiles = [...files.image, ...files.video];
+            if (mediaFiles.length > 0) {
+                attachmentHtml += '<div class="msg-media-grid">';
+                files.image.forEach(file => {
+                    const url = URL.createObjectURL(file);
+                    attachmentHtml += `<img src="${url}" class="msg-media-item" alt="${file.name}">`;
+                });
+                files.video.forEach(file => {
+                    const url = URL.createObjectURL(file);
+                    attachmentHtml += `<video src="${url}" controls class="msg-media-item"></video>`;
+                });
+                attachmentHtml += '</div>';
+            }
+
+            // (B) 오디오 & 일반 파일 (리스트 형태)
+            const docFiles = [...files.audio, ...files.file];
+            if (docFiles.length > 0) {
+                attachmentHtml += '<div class="msg-file-list">';
+                
+                // 오디오
+                files.audio.forEach(file => {
+                    attachmentHtml += `
+                        <div class="msg-file-item">
+                            <i class="fas fa-volume-up"></i> 
+                            <span>${file.name}</span>
+                            </div>`;
+                });
+                
+                // 일반 파일
+                files.file.forEach(file => {
+                    attachmentHtml += `
+                        <div class="msg-file-item">
+                            <i class="fas fa-file-alt"></i> 
+                            <span>${file.name}</span>
+                        </div>`;
+                });
+                attachmentHtml += '</div>';
+            }
+
+            attachmentHtml += '</div>';
+        }
+
+        // 2. 최종 HTML 조립
         const html = `
             <div class="message-row ${role}">
                 <div class="bubble ${role}-bubble">
                     <strong>${title}</strong>
                     ${detail ? `<br>${detail.replace(/\n/g, '<br>')}` : ''}
+                    
+                    ${attachmentHtml}
                 </div>
             </div>`;
+            
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
+    
     }
 
     private appendLoading(id: string): void {
