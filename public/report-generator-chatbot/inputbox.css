@@ -182,10 +182,10 @@ textarea:focus {
 /* 예시값 버튼 */
 .example-btn {
     width: 70px;
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
+    background-color: var(--bg-color);
+    border-color: var(--gray-light);
     border-radius: 8px;
-    color: #495057;
+    color: var(--footer-text-color);
     cursor: pointer;
     font-size: 0.8rem;
     display: flex;
@@ -198,8 +198,8 @@ textarea:focus {
 }
 
 .example-btn:hover {
-    background-color: #dee2e6;
-    color: #212529;
+    background-color: var(--gray-light);
+    color: var(--footer-text-color);
 }
 
 .example-btn i {
