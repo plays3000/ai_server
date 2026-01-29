@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    /* 1. 환경 설정: Node.js 최신 환경에 맞춤 */
+    // 1. 최신 Node.js ESM 환경 확정
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -8,21 +8,25 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* 2. 구조 정리: 소스는 src, 결과물은 dist */
+    // 2. 경로 및 구조 확정
     "rootDir": "./src",
     "outDir": "./dist",
-    "allowJs": true,           /* JS 파일을 TS로 옮기는 과정에서 필수 */
-    "checkJs": false,          /* JS 파일의 타입 에러까지는 체크 안 함 (과도기용) */
+    
+    // [레거시 제거] 이제 모든 코드가 TS이므로 JS 허용 옵션 제거
+    "allowJs": false,
+    "checkJs": false,
 
-    /* 3. 엄격도: 장기적인 안정성을 위해 유지 */
+    // 3. 엄격한 타입 체크 (안정성 극대화)
     "strict": true,
-    "noUncheckedIndexedAccess": true, /* 기존에 있던 좋은 엄격 옵션 유지 */
-    "sourceMap": true,
-
-    /* 4. 기타 불필요한 설정 제거 */
-    // jsx: "react-jsx" -> 현재 EJS를 사용 중이므로 리액트를 안 쓴다면 제거하는 게 깔끔합니다.
-    "isolatedModules": true
+    "noImplicitAny": true,           // 암시적 any 에러 발생
+    "strictNullChecks": true,        // null/undefined 체크 강화
+    "noUncheckedIndexedAccess": true, // 인덱스 접근 시 undefined 가능성 체크
+    "sourceMap": true,               // 디버깅을 위한 소스맵 유지
+    
+    // 4. 모듈 시스템 최적화
+    "isolatedModules": true,
+    "resolveJsonModule": true        // JSON 파일 임포트 허용 (package.json 등 참조용)
   },
-  "include": ["src/**/*"],     /* src 폴더 내 모든 것만 관리 대상 */
-  "exclude": ["node_modules", "dist"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "public"]
 }

@@ -1,10 +1,10 @@
 import { GoogleGenerativeAI, type GenerationConfig } from "@google/generative-ai";
 import 'dotenv/config';
 
-const apiKey = process.env.GEMINI_API_KEY2;
+const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-    throw new Error("GEMINI_API_KEY2가 환경 변수에 설정되어 있지 않습니다. .env 파일을 확인해주세요.");
+    throw new Error("GEMINI_API_KEY가 환경 변수에 설정되어 있지 않습니다. .env 파일을 확인해주세요.");
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);

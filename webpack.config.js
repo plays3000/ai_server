@@ -6,13 +6,13 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-    // 개발 모드 설정 (배포 시 'production'으로 변경 가능)
+    // 1. 모드 설정 (에러 로그의 경고 해결)
     mode: 'development',
     
-    // 빌드 시작점 (메인 챗봇 로직)
+    // 2. 진입점 설정 (기존 src/index.js 대신 실제 경로 지정)
     entry: './src/client/chatbot/chatbot.ts',
     
-    // TypeScript 파일 처리 규칙
+    // 3. TypeScript 처리 규칙
     module: {
         rules: [
             {
@@ -23,19 +23,18 @@ export default {
         ],
     },
     
-    // 파일 확장자 해석 순서
+    // 4. 확장자 처리
     resolve: {
         extensions: ['.ts', '.js'],
-        // ESM 모듈의 .js 확장자 임포트를 .ts로 해석하도록 설정
         extensionAlias: {
             '.js': ['.ts', '.js'],
         },
     },
     
-    // 최종 빌드 결과물 저장 위치 및 파일명
+    // 5. 출력 설정
     output: {
         filename: 'chatbot.bundle.js',
         path: path.resolve(__dirname, 'public/js'),
-        clean: true, // 빌드 시 이전 파일 삭제
+        clean: true,
     },
 };
