@@ -26,6 +26,9 @@ const upload = multer({ dest: 'uploads/' });
 
 connectToDatabase();
 
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "/public")));
 app.use(express.static(path.join(__dirname, "/node_modules")));
@@ -44,7 +47,7 @@ app.use('/excel', excelRouter);
 app.use('/auth', authRouter);
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'index.html'));
+  res.render('report-generator-chatbot/chatbot');
 });
 
 app.get('/test-auth.html', (req, res) => {

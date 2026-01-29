@@ -1,15 +1,39 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "node",
+    /* 환경 설정: 최신 Node.js 환경 대응 */
+    "target": "ESNext",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "allowJs": true,
-    "strict": true,
     "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* 출력 및 빌드 설정 (기존 프로젝트 구조 유지) */
+    "rootDir": "./",
     "outDir": "./dist",
-    "rootDir": "./"
+    "sourceMap": true,
+    "declaration": true,
+    "declarationMap": true,
+
+    /* 타입 체크 강화 (origin의 엄격한 옵션 적용) */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+
+    /* 기타 */
+    "jsx": "react-jsx"
   },
-  "include": ["routes/**/*.ts", "config/**/*.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "routes/**/*.ts",
+    "config/**/*.ts",
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
