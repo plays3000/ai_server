@@ -14,11 +14,12 @@ import { type ResultSetHeader, type RowDataPacket } from 'mysql2';
 
 const router: Router = express.Router();
 
-<<<<<<< HEAD
 // 1. 일반 회원가입
-=======
+
 // 1. 회원가입
->>>>>>> 6bc3c92 (폴더구조 먼저 정리)
+
+// 1. 일반 회원가입
+
 router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response<AuthResponse>) => {
     try {
         const { email, password, name, companyName } = req.body;
@@ -27,7 +28,7 @@ router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response
             return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' });
         }
 
-        // 이메일 중복 체크 (User 인터페이스 적용)
+        // 이메일 중복 체크
         const [existingUsers] = await pool.query<User[]>(
             'SELECT id FROM users WHERE email = ?',
             [email]
@@ -41,6 +42,7 @@ router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response
         let companyId: number;
         let userRole: 'admin' | 'user';
 
+        // 회사(워크스페이스) 처리 로직
         if (companyName && companyName.trim() !== '') {
             const [companies] = await pool.query<RowDataPacket[]>(
                 'SELECT id FROM companies WHERE name = ?',
@@ -49,16 +51,17 @@ router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response
 
             if (companies.length > 0) {
                 companyId = (companies[0] as { id: number }).id;
-                userRole = 'user';
+                userRole = 'user'; // 기존 회사에 가입하면 일반 유저
             } else {
                 const [companyResult] = await pool.query<ResultSetHeader>(
                     'INSERT INTO companies (name) VALUES (?)',
                     [companyName.trim()]
                 );
                 companyId = companyResult.insertId;
-                userRole = 'admin';
+                userRole = 'admin'; // 새 회사를 만들면 관리자
             }
         } else {
+            // 회사명 미입력 시 개인 워크스페이스 생성
             const [companyResult] = await pool.query<ResultSetHeader>(
                 'INSERT INTO companies (name) VALUES (?)',
                 [`${name}의 워크스페이스`]
@@ -85,7 +88,7 @@ router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response
     }
 });
 
-// 2. 로그인
+// 2. 일반 로그인
 router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthResponse>) => {
     try {
         const { email, password } = req.body;
@@ -112,12 +115,10 @@ router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthR
         const token = jwt.sign(
             { id: user.id, email: user.email },
             authConfig.jwtSecret,
-            { 
-                // as any를 붙여서 strict 옵션 충돌을 방지합니다.
-                expiresIn: authConfig.jwtExpiresIn as any 
-            }
+            { expiresIn: authConfig.jwtExpiresIn as any }
         );
 
+        // 비밀번호를 제외한 정보 반환
         const { password: _, ...userWithoutPassword } = user;
 
         res.json({
@@ -133,7 +134,7 @@ router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthR
     }
 });
 
-// 구글/네이버 라우트는 기존 로직 유지 (타입만 Request, Response로 명시)
+// 3. 소셜 로그인 (구글)
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback', 
@@ -145,6 +146,7 @@ router.get('/google/callback',
     }
 );
 
+// 4. 소셜 로그인 (네이버)
 router.get('/naver', passport.authenticate('naver'));
 
 router.get('/naver/callback',
