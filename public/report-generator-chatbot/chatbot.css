@@ -7,7 +7,13 @@
     --white: #ffffff;
     --text-color: #333;
     --gray-light: #e0e0e0;
-    --gray-text: #666; /* 기본 회색 텍스트 색상 */
+    --gray-dark: #444;
+    --gray-text: #888; /* 기본 회색 텍스트 색상 */
+    --input-bg-color: var(--white);
+    --bubble-ai-bg-color: var(--white);
+    --bubble-ai-text-color: var(--text-color);
+    --footer-text-color: var(--gray-text);
+    --file-list-bg-color: var(--white);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,8 +67,8 @@ body {
 }
 
 .bubble.ai-bubble {
-    background-color: var(--white);
-    color: var(--text-color);
+    background-color: var(--bubble-ai-bg-color);
+    color: var(--bubble-ai-text-color);
     border: 1px solid var(--gray-light);
     border-bottom-left-radius: 2px;
 }
