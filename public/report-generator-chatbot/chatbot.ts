@@ -1,6 +1,6 @@
 import { HeaderManager } from './header.js';
 import { FooterManager } from './footer.js';
-import { FileStore } from './types.js';
+import type { FileStore } from './types.js';
 import { VoiceRecorder } from './voicerecorder.js';
 
 class ChatbotApp {

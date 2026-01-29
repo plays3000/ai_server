@@ -1,4 +1,4 @@
-import { AppSettings } from './types.js';
+import type { AppSettings } from './types.js';
 
 export class FooterManager {
     private modal: HTMLElement | null;
