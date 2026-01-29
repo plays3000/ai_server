@@ -1,162 +1,92 @@
 import express, { type Request, type Response, type Router } from 'express';
 import multer from 'multer';
-import * as XLSX from 'xlsx';
-import fs from 'fs/promises';
+import * as xlsx from 'xlsx';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import fs from 'fs';
 import { pool } from '../config/dbConfig.js';
+import { model } from '../config/geminiConfig.js';
 import { type ResultSetHeader, type RowDataPacket } from 'mysql2';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const router: Router = express.Router();
 
-// 템플릿 업로드용 multer 설정
-const templateStorage = multer.diskStorage({
-    destination: 'uploads/templates/',
-    filename: (req, file, cb) => {
-        // 한글 파일명 깨짐 방지
-        const originalName = Buffer.from(file.originalname, 'latin1').toString('utf8');
-        const uniqueName = `${Date.now()}-${originalName}`;
-        cb(null, uniqueName);
+// 엑셀 템플릿 업로드 경로 설정
+const upload = multer({ dest: 'uploads/templates/' });
+
+// 1. 등록된 모든 엑셀 템플릿 목록 조회
+router.get('/', async (req: Request, res: Response) => {
+    try {
+        const [rows] = await pool.query<RowDataPacket[]>('SELECT * FROM excel_templates');
+        res.json(rows);
+    } catch (error) {
+        console.error('템플릿 조회 실패:', error);
+        res.status(500).json({ error: '데이터베이스 조회 중 오류 발생' });
     }
 });
 
-const uploadTemplate = multer({ storage: templateStorage });
-
-// 인터페이스 정의 (DB 결과 타입 지정)
-interface DocumentTemplate extends RowDataPacket {
-    id: number;
-    tenant_id: number;
-    name: string;
-    template_file_path: string;
-}
-
-// 1. 템플릿 업로드
-router.post('/templates', uploadTemplate.single('template'), async (req: Request, res: Response) => {
+// 2. 새로운 엑셀 템플릿 업로드
+router.post('/upload-template', upload.single('template'), async (req: Request, res: Response) => {
     try {
-        const { tenant_id, name } = req.body;
-        
-        if (!req.file) {
-            return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
-        }
+        if (!req.file) return res.status(400).json({ error: '파일이 업로드되지 않았습니다.' });
 
-        const sql = 'INSERT INTO document_templates (tenant_id, name, template_file_path) VALUES (?, ?, ?)';
-        const [result] = await pool.query<ResultSetHeader>(sql, [tenant_id, name, req.file.path]);
-        
-        res.json({ success: true, template_id: result.insertId });
+        const { originalname, path: filePath } = req.file;
+        const [result] = await pool.query<ResultSetHeader>(
+            'INSERT INTO excel_templates (name, file_path) VALUES (?, ?)',
+            [originalname, filePath]
+        );
+
+        res.json({ success: true, id: result.insertId });
     } catch (error) {
-        console.error('템플릿 업로드 에러:', error);
-        res.status(500).json({ error: '서버 오류 발생' });
+        console.error('템플릿 업로드 실패:', error);
+        res.status(500).json({ error: '템플릿 저장 중 오류 발생' });
     }
 });
 
-// 2. 회사별 템플릿 조회
-router.get('/templates/:tenant_id', async (req: Request, res: Response) => {
+// 3. AI 분석 기반 보고서 생성 (핵심 로직)
+router.post('/generate', async (req: Request, res: Response) => {
     try {
-        const sql = 'SELECT * FROM document_templates WHERE tenant_id = ?';
-        const [templates] = await pool.query<DocumentTemplate[]>(sql, [req.params['tenant_id']]);
-        
-        res.json(templates);
-    } catch (error) {
-        res.status(500).json({ error: '조회 중 오류 발생' });
-    }
-});
+        const { templateId, data } = req.body; // data는 AI가 분석할 원문 텍스트
 
-// 3. 템플릿 상세 조회 (엑셀 데이터 포함)
-router.get('/template/view/:template_id', async (req: Request, res: Response) => {
-    try {
-        const sql = 'SELECT * FROM document_templates WHERE id = ?';
-        const [rows] = await pool.query<DocumentTemplate[]>(sql, [req.params['template_id']]);
-        
-        if (rows.length === 0) {
-            return res.status(404).json({ error: '템플릿을 찾을 수 없습니다' });
-        }
-        
-        const template = rows[0]!;
-        
-        // 엑셀 읽기
-        const fileBuffer = await fs.readFile(template.template_file_path);
-        const workbook = XLSX.read(fileBuffer);
-        const sheetName = workbook.SheetNames[0]!;
-        const sheet = workbook.Sheets[sheetName]!;
-        
-        // 데이터 추출
-        const data = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
-        
-        // 병합 셀 정보 추출
-        const merges = sheet['!merges'] || [];
-        const mergeCells = merges.map(m => ({
-            row: m.s.r,
-            col: m.s.c,
-            rowspan: m.e.r - m.s.r + 1,
-            colspan: m.e.c - m.s.c + 1
-        }));
-        
-        res.json({
-            templateName: template.name,
-            data: data,
-            mergeCells: mergeCells
-        });
-    } catch (error) {
-        res.status(500).json({ error: '템플릿 분석 중 오류 발생' });
-    }
-});
+        // 템플릿 파일 경로 조회
+        const [templates] = await pool.query<RowDataPacket[]>(
+            'SELECT file_path FROM excel_templates WHERE id = ?',
+            [templateId]
+        );
 
-// 4. 자동 채우기
-router.post('/template/autofill/:template_id', uploadTemplate.single('userFile'), async (req: Request, res: Response) => {
-    try {
-        const sql = 'SELECT * FROM document_templates WHERE id = ?';
-        const [rows] = await pool.query<DocumentTemplate[]>(sql, [req.params['template_id']]);
-        
-        if (rows.length === 0 || !req.file) {
-            return res.status(404).json({ error: '템플릿 또는 업로드 파일을 찾을 수 없습니다' });
-        }
-        
-        const template = rows[0]!;
-        
-        // 템플릿 및 사용자 파일 읽기
-        const [templateBuffer, userBuffer] = await Promise.all([
-            fs.readFile(template.template_file_path),
-            fs.readFile(req.file.path)
-        ]);
+        if (templates.length === 0) return res.status(404).json({ error: '템플릿을 찾을 수 없습니다.' });
+        const filePath = (templates[0] as { file_path: string }).file_path;
 
-        const templateWorkbook = XLSX.read(templateBuffer);
-        const templateSheet = templateWorkbook.Sheets[templateWorkbook.SheetNames[0]!]!;
-        const templateData = XLSX.utils.sheet_to_json<any[]>(templateSheet, { header: 1, defval: '' });
-        
-        const userWorkbook = XLSX.read(userBuffer);
-        const userSheet = userWorkbook.Sheets[userWorkbook.SheetNames[0]!]!;
-        const userData = XLSX.utils.sheet_to_json<any[]>(userSheet, { header: 1, defval: '' });
-        
-        // 자동 채우기 로직 (기존 기능 유지)
-        const result = templateData.map((row, rowIdx) => {
-            return row.map((cell, colIdx) => {
-                if (userData[rowIdx] && userData[rowIdx][colIdx]) {
-                    return userData[rowIdx][colIdx];
-                }
-                return cell || '';
-            });
-        });
-        
-        const merges = templateSheet['!merges'] || [];
-        const mergeCells = merges.map(m => ({
-            row: m.s.r,
-            col: m.s.c,
-            rowspan: m.e.r - m.s.r + 1,
-            colspan: m.e.c - m.s.c + 1
-        }));
-        
-        // 임시 파일 삭제
-        await fs.unlink(req.file.path);
-        
-        res.json({
-            success: true,
-            data: result,
-            mergeCells: mergeCells
-        });
+        // 엑셀 파일 읽기 및 구조 분석
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName!];
+        const templateStructure = xlsx.utils.sheet_to_json(sheet!);
+
+        // Gemini AI에게 데이터 추출 요청
+        const prompt = `
+            다음 엑셀 템플릿 구조에 맞춰서 데이터를 추출해줘:
+            구조: ${JSON.stringify(templateStructure)}
+            원문 데이터: ${data}
+            결과는 반드시 JSON 형식으로만 응답해줘.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const aiResponse = result.response.text();
+        const extractedData = JSON.parse(aiResponse.replace(/```json|```/g, ''));
+
+        // 추출된 데이터를 새 엑셀 파일로 생성
+        const newSheet = xlsx.utils.json_to_sheet(extractedData);
+        const newWorkbook = xlsx.utils.book_new();
+        xlsx.utils.book_append_sheet(newWorkbook, newSheet, 'Report');
+
+        const outputFileName = `report_${Date.now()}.xlsx`;
+        const outputPath = path.join('uploads', outputFileName);
+        xlsx.writeFile(newWorkbook, outputPath);
+
+        res.json({ success: true, downloadUrl: `/uploads/${outputFileName}` });
+
     } catch (error) {
-        if (req.file) await fs.unlink(req.file.path).catch(() => {});
-        res.status(500).json({ error: '자동 채우기 처리 중 오류 발생' });
+        console.error('보고서 생성 실패:', error);
+        res.status(500).json({ error: '보고서 생성 중 오류 발생' });
     }
 });
 

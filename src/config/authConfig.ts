@@ -1,16 +1,32 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import 'dotenv/config';
 
-interface AuthConfig {
+/**
+ * 인증 및 소셜 로그인 환경 설정 인터페이스
+ */
+export interface AuthConfig {
     jwtSecret: string;
     jwtExpiresIn: string;
     bcryptRounds: number;
-    sessionSecret: string;
+    googleClientId: string;
+    googleClientSecret: string;
+    naverClientId: string;
+    naverClientSecret: string;
 }
 
+/**
+ * 환경 변수(.env)를 기반으로 한 인증 설정 객체
+ */
 export const authConfig: AuthConfig = {
-    jwtSecret: process.env.JWT_SECRET || 'your-secret-key-change-this',
-    jwtExpiresIn: '24h',
-    bcryptRounds: 10,
-    sessionSecret: process.env.SESSION_SECRET || 'session-secret-change-this'
+    // JWT 및 보안 설정
+    jwtSecret: process.env.JWT_SECRET || 'default-jwt-secret-key',
+    jwtExpiresIn: process.env.JWT_EXPIRES_IN || '24h',
+    bcryptRounds: Number(process.env.BCRYPT_ROUNDS) || 10,
+
+    // Google OAuth 설정
+    googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+
+    // Naver OAuth 설정
+    naverClientId: process.env.NAVER_CLIENT_ID || '',
+    naverClientSecret: process.env.NAVER_CLIENT_SECRET || '',
 };
