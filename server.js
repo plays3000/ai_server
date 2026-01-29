@@ -52,50 +52,96 @@ app.get('/test-auth.html', (req, res) => {
 });
 
 // ✅ 두 개의 /chat 라우트를 하나로 통합했습니다.
-app.post('/chat', upload.array('pdfFile', 10), async (req, res) => {
+app.post('/chat', upload.fields([
+    { name: 'pdfFile', maxCount: 10 },
+    { name: 'images', maxCount: 10 }
+]), async (req, res) => {
     try {
         const { title, detail } = req.body;
-        const userMessage = title ? `${title}\n${detail || ''}` : req.body.message;
-
-        if (!userMessage) {
-            return res.status(400).json({ error: "입력된 메시지가 없습니다." });
-        }
-
-        // Gemini에게 보낼 기본 텍스트 추가
+        const userMessage = `${title}\n${detail || ''}`;
         const chatInputs = [{ text: userMessage }];
 
-        // ✅ 수정 포인트: req.file 대신 req.files(배열)를 사용합니다.
-        if (req.files && req.files.length > 0) {
-            req.files.forEach(file => {
-                const pdfData = {
+        // 헬퍼 함수: 파일을 읽어서 Gemini용 객체로 변환
+        const processFiles = (files, defaultMime) => {
+            if (!files) return;
+            files.forEach(file => {
+                chatInputs.push({
                     inlineData: {
                         data: fs.readFileSync(file.path).toString("base64"),
-                        mimeType: "application/pdf",
-                    },
-                };
-                chatInputs.push(pdfData);
-
-                // 파일 읽은 후 즉시 삭제
-                fs.unlinkSync(file.path);
+                        // 중요: 파일의 실제 타입(image/png 등)을 사용, 없으면 기본값
+                        mimeType: file.mimetype || defaultMime 
+                    }
+                });
+                fs.unlinkSync(file.path); // 분석 후 삭제
             });
-            console.log(`${req.files.length}개의 파일이 Gemini에게 전달되었습니다.`);
-        }
+        };
 
-        // Gemini 답변 생성
+        // PDF와 이미지 각각 처리
+        processFiles(req.files['pdfFile'], "application/pdf");
+        processFiles(req.files['images'], "image/jpeg");
+
+        // Gemini 호출
         const result = await model.generateContent(chatInputs);
         const reply = result.response.text();
 
-        // MySQL 저장 (기존과 동일)
-        const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
-        await pool.query(sql, [userMessage, reply]);
-
-        res.json({ reply: reply });
+        // DB 저장 및 응답
+        await pool.query('INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)', [userMessage, reply]);
+        res.json({ reply });
 
     } catch (error) {
-        console.error("에러 상세:", error);
-        res.status(500).json({ error: "분석 중 오류 발생", message: error.message });
+        console.error("분석 실패:", error);
+        res.status(500).json({ error: "파일 분석 중 오류 발생" });
     }
 });
+
+// ✅ 두 개의 /chat 라우트를 하나로 통합했습니다.
+// app.post('/chat', upload.fields([
+//     { name: 'pdfFile', maxCount: 10 },
+//     { name: 'images', maxCount: 10 }
+// ]), async (req, res) => {
+//     try {
+//         const { title, detail } = req.body;
+//         const userMessage = title ? `${title}\n${detail || ''}` : req.body.message;
+
+//         if (!userMessage) {
+//             return res.status(400).json({ error: "입력된 메시지가 없습니다." });
+//         }
+
+//         // Gemini에게 보낼 기본 텍스트 추가
+//         const chatInputs = [{ text: userMessage }];
+
+//         // ✅ 수정 포인트: req.file 대신 req.files(배열)를 사용합니다.
+//         if (req.files && req.files.length > 0) {
+//             req.files.forEach(file => {
+//                 const pdfData = {
+//                     inlineData: {
+//                         data: fs.readFileSync(file.path).toString("base64"),
+//                         mimeType: "application/pdf",
+//                     },
+//                 };
+//                 chatInputs.push(pdfData);
+
+//                 // 파일 읽은 후 즉시 삭제
+//                 fs.unlinkSync(file.path);
+//             });
+//             console.log(`${req.files.length}개의 파일이 Gemini에게 전달되었습니다.`);
+//         }
+
+//         // Gemini 답변 생성
+//         const result = await model.generateContent(chatInputs);
+//         const reply = result.response.text();
+
+//         // MySQL 저장 (기존과 동일)
+//         const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
+//         await pool.query(sql, [userMessage, reply]);
+
+//         res.json({ reply: reply });
+
+//     } catch (error) {
+//         console.error("에러 상세:", error);
+//         res.status(500).json({ error: "분석 중 오류 발생", message: error.message });
+//     }
+// });
 // app.post('/chat', upload.array('pdfFile', 10), async (req, res) => {
 //     try {
 //         // 프론트엔드에서 보낸 title과 detail을 합쳐서 프롬프트를 만듭니다.
