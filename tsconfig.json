@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    /* 환경 설정: 최신 Node.js 환경 대응 */
     "target": "ESNext",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
@@ -9,27 +8,26 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
 
-    /* 출력 및 빌드 설정 (기존 프로젝트 구조 유지) */
     "rootDir": "./",
     "outDir": "./dist",
     "sourceMap": true,
     "declaration": true,
     "declarationMap": true,
 
-    /* 타입 체크 강화 (origin의 엄격한 옵션 적용) */
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
+    "exactOptionalPropertyTypes": true, // 엄격하게 관리하려면 유지
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
 
-    /* 기타 */
     "jsx": "react-jsx"
   },
   "include": [
+    "server.ts",
     "routes/**/*.ts",
     "config/**/*.ts",
+    "types/**/*.ts",
     "src/**/*.ts"
   ],
   "exclude": [

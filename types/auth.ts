@@ -1,4 +1,6 @@
-export interface User {
+import { type RowDataPacket } from 'mysql2';
+
+export interface User extends RowDataPacket {
     id: number;
     email: string;
     name: string;
@@ -11,7 +13,8 @@ export interface User {
     created_at?: Date;
     updated_at?: Date;
 }
-export interface Company {
+
+export interface Company extends RowDataPacket {
     id: number;
     name: string;
     created_at?: Date;
@@ -37,7 +40,7 @@ export interface AuthResponse {
     user?: Omit<User, 'password'>;
 }
 
-export interface ChatHistory {
+export interface ChatHistory extends RowDataPacket {
     id: number;
     user_id: number;
     company_id: number;
