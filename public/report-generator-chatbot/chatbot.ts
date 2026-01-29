@@ -5,7 +5,8 @@ import { VoiceRecorder } from './voicerecorder.js';
 
 class ChatbotApp {
     private chatContainer: HTMLElement;
-    private filesData: FileStore = { image: [], audio: [], file: [] };
+    // [확인] types.ts의 FileStore 인터페이스에도 video: File[]가 있어야 합니다.
+    private filesData: FileStore = { image: [], video: [], audio: [], file: [] };
     
     // UI Elements
     private titleInput: HTMLInputElement;
@@ -14,14 +15,14 @@ class ChatbotApp {
     private voiceRecorder: VoiceRecorder;
     
     constructor() {
-        // DOM 요소 캐싱 (Non-null assertion '!' 사용 - 존재한다고 가정)
         this.chatContainer = document.getElementById('chatContainer')!;
         this.titleInput = document.getElementById('reportTitle') as HTMLInputElement;
         this.detailInput = document.getElementById('reportDetail') as HTMLTextAreaElement;
         this.fileListArea = document.getElementById('fileListArea')!;
 
+        // 음성 녹음 완료 시 오디오 배열에 추가
         this.voiceRecorder = new VoiceRecorder((audioFile) => {
-            this.filesData.file.push(audioFile);
+            this.filesData.audio.push(audioFile); // audio 배열로 저장
             this.renderFileList();
         });
 
@@ -29,15 +30,14 @@ class ChatbotApp {
     }
 
     private init(): void {
-        // 1. 모듈 조립
-        new HeaderManager(() => this.resetChat()); // 헤더의 리셋 이벤트 연결
-        new FooterManager(); // 푸터(설정) 연결
-        // 2. 파일 그리드 영역 추가
+        new HeaderManager(() => this.resetChat());
+        new FooterManager();
+        
+        // 파일 그리드 영역 생성
         const fileGrid = document.createElement('div');
         fileGrid.className = 'file-grid';
         this.fileListArea.appendChild(fileGrid);
 
-        // 3. 이벤트 리스너 등록
         this.setupInputEvents();
         this.setupFileEvents();
     }
@@ -57,10 +57,7 @@ class ChatbotApp {
 
     private fillExampleData(): void {
         this.titleInput.value = '2024년 1분기 영업 실적 보고서';
-        this.detailInput.value = `- 주요 성과 요약
-- 지역별 매출 분석 (그래프 포함)
-- 신규 고객 확보 현황
-- 2분기 목표 및 전략 제안`;
+        this.detailInput.value = `- 주요 성과 요약\n- 지역별 매출 분석 (그래프 포함)\n- 신규 고객 확보 현황\n- 2분기 목표 및 전략 제안`;
     }
 
     private generateReport(): void {
@@ -70,19 +67,15 @@ class ChatbotApp {
             return;
         }
 
-        // 사용자 메시지 추가
         this.appendMessage('user', title, this.detailInput.value);
 
-        // 로딩 UI
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
-        // 입력창 초기화
         this.titleInput.value = '';
         this.detailInput.value = '';
         this.clearFiles();
 
-        // AI 응답 시뮬레이션
         setTimeout(() => {
             const loadingEl = document.getElementById(loadingId);
             loadingEl?.remove();
@@ -95,7 +88,7 @@ class ChatbotApp {
             <div class="message-row ${role}">
                 <div class="bubble ${role}-bubble">
                     <strong>${title}</strong>
-                    ${detail ? `<br>${detail}` : ''}
+                    ${detail ? `<br>${detail.replace(/\n/g, '<br>')}` : ''}
                 </div>
             </div>`;
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
@@ -123,20 +116,39 @@ class ChatbotApp {
     private setupFileEvents(): void {
         const fileBtn = document.getElementById('btnAttachFile');
         const fileInput = document.getElementById('realFileInput') as HTMLInputElement;
+        const imageBtn = document.getElementById('btnAttachImage');
+        const imageInput = document.getElementById('realImageInput') as HTMLInputElement;
 
+        // 일반 파일 버튼
         fileBtn?.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files) this.handleFiles(target.files);
         });
 
+        // 이미지 전용 버튼 (추가됨)
+        imageBtn?.addEventListener('click', () => imageInput.click());
+        imageInput.addEventListener('change', (e) => {
+            const target = e.target as HTMLInputElement;
+            if (target.files) this.handleFiles(target.files);
+        });
+
+        // 음성 녹음 버튼
         const voiceRecordBtn = document.getElementById('btnVoiceRecord');
         voiceRecordBtn?.addEventListener('click', () => this.voiceRecorder.startRecording());
     }
 
     private handleFiles(files: FileList): void {
         Array.from(files).forEach(file => {
-            this.filesData.file.push(file); // 로직 단순화
+            if (file.type.startsWith('image/')) {
+                this.filesData.image.push(file);
+            } else if (file.type.startsWith('video/')) {
+                this.filesData.video.push(file);
+            } else if (file.type.startsWith('audio/')) {
+                this.filesData.audio.push(file);
+            } else {
+                this.filesData.file.push(file);
+            }
         });
         this.renderFileList();
     }
@@ -144,68 +156,88 @@ class ChatbotApp {
     private renderFileList(): void {
         const fileGrid = this.fileListArea.querySelector('.file-grid');
         if (!fileGrid) return;
-
+        
         fileGrid.innerHTML = '';
-        if (this.filesData.file.length === 0) {
+        
+        const totalFiles = this.filesData.image.length + 
+                           this.filesData.video.length + 
+                           this.filesData.audio.length + 
+                           this.filesData.file.length;
+
+        if (totalFiles === 0) {
             this.fileListArea.classList.remove('active');
             return;
         }
 
-        this.filesData.file.forEach((file, index) => {
+        // 각 카테고리별 렌더링
+        this.renderCategory(fileGrid, 'image');
+        this.renderCategory(fileGrid, 'video');
+        this.renderCategory(fileGrid, 'audio');
+        this.renderCategory(fileGrid, 'file');
+
+        this.fileListArea.classList.add('active');
+    }
+    
+    // [중요 수정됨] DOM 생성 로직 구현
+    private renderCategory(container: Element, type: keyof FileStore): void {
+        this.filesData[type].forEach((file, index) => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item-box';
 
-            // 썸네일 영역
-            const thumbnail = document.createElement('div');
-            thumbnail.className = 'thumbnail';
-
-            if (file.type.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.className = 'thumb-img';
-                img.onload = () => URL.revokeObjectURL(img.src); // 메모리 해제
-                thumbnail.appendChild(img);
-            } else {
-                const icon = document.createElement('div');
-                icon.className = 'thumb-icon';
-                icon.innerHTML = '<i class="fas fa-file-alt"></i>'; // Font Awesome 아이콘
-                thumbnail.appendChild(icon);
-            }
-            
-            // 삭제 버튼
+            // 1. 삭제 버튼 (type과 index를 함께 전달해야 함)
             const removeBtn = document.createElement('div');
             removeBtn.className = 'file-remove-btn';
             removeBtn.innerHTML = '&times;';
             removeBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                this.removeFile(index);
+                this.removeFile(type, index); // ★ 핵심 수정: 종류와 인덱스를 넘김
             });
+            fileItem.appendChild(removeBtn);
 
-            thumbnail.appendChild(removeBtn);
+            // 2. 썸네일/아이콘 영역
+            const thumbnail = document.createElement('div');
+            thumbnail.className = 'thumbnail';
+
+            if (type === 'image') {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'thumb-img';
+                img.onload = () => URL.revokeObjectURL(img.src);
+                thumbnail.appendChild(img);
+            } else {
+                const icon = document.createElement('div');
+                icon.className = 'thumb-icon';
+                
+                let iconClass = 'fa-file-alt'; // 기본값
+                if (type === 'video') iconClass = 'fa-film';
+                else if (type === 'audio') iconClass = 'fa-music';
+
+                icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
+                thumbnail.appendChild(icon);
+            }
             fileItem.appendChild(thumbnail);
 
-            // 파일 이름
+            // 3. 파일명
             const fileName = document.createElement('div');
             fileName.className = 'file-name';
             fileName.textContent = file.name;
+            fileName.title = file.name;
             fileItem.appendChild(fileName);
 
-            fileGrid.appendChild(fileItem);
+            container.appendChild(fileItem);
         });
-
-        this.fileListArea.classList.add('active');
     }
 
-    private removeFile(index: number): void {
-        this.filesData.file.splice(index, 1);
+    // [중요 수정됨] 삭제 시 어떤 배열(type)에서 지울지 알아야 함
+    private removeFile(type: keyof FileStore, index: number): void {
+        this.filesData[type].splice(index, 1);
         this.renderFileList();
     }
 
     private clearFiles(): void {
-        this.filesData = { image: [], audio: [], file: [] };
+        this.filesData = { image: [], video: [], audio: [], file: [] };
         this.renderFileList();
     }
 }
 
-// 앱 실행 (Main 진입점)
 new ChatbotApp();

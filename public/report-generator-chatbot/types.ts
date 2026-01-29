@@ -1,6 +1,7 @@
 // [추가됨] 파일 저장소 타입 정의
 export interface FileStore {
     image: File[];
+    video: File[];
     audio: File[];
     file: File[];
 }
