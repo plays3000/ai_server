@@ -1,6 +1,15 @@
 <header>
-    <h1><i class="fas fa-robot"></i><span data-i18n="app_title">AI 기반 보고서 생성기</span> </h1>
-    <button id="resetBtn" class="reset-btn" title="대화 초기화" data-i18n-title="reset_chat">
-        <i class="fas fa-trash-alt" data-i18n="btn_reset"></i> 
-    </button>
+    <h1><i class="fas fa-robot"></i> <span data-i18n="app_title">AI 기반 보고서 생성기</span></h1>
+    
+    <div class="header-actions">
+        <button id="resetBtn" class="action-btn reset-btn" title="대화 초기화" data-i18n-title="reset_chat">
+            <i class="fas fa-trash-alt"></i> 
+            <span data-i18n="btn_reset">초기화</span>
+        </button>
+
+        <button id="loginBtn" class="action-btn login-btn" title="로그인" data-i18n-title="btn_login">
+            <i class="fas fa-sign-in-alt"></i> 
+            <span id="loginBtnText" data-i18n="btn_login">로그인</span>
+        </button>
+    </div>
 </header>
