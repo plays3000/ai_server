@@ -15,8 +15,8 @@ import {pool} from './config/dbConfig.js';
 // 분리된 라우터 임포트
 import authRouter from './routes/auth.js';
 import excelRouter from './routes/excel.js';
-//import chatRouter from './routes/chat.js';
-import {fileToGenerativePart} from './client/chatbot/readFiles.js'
+import {insertJsonToDb} from './backend/json_to_db.js';
+import {fileToGenerativePart} from './client/readFiles.js'
 
 
 const __filename = fileURLToPath(import.meta.url);
