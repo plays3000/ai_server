@@ -1,0 +1,209 @@
+/* 기본 리셋 및 폰트 */
+body {
+    font-family: 'Pretendard', 'Noto Sans KR', sans-serif; /* 최신 폰트 우선 적용 */
+    background-color: #f5f7fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+    color: #333;
+}
+
+.login-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 16px; /* 둥근 모서리 강화 */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05); /* 부드러운 그림자 */
+    width: 100%;
+    max-width: 420px;
+}
+
+h2 {
+    text-align: center;
+    margin-bottom: 24px;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* 입력 폼 스타일 */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #666;
+}
+
+.form-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 15px;
+    transition: all 0.2s;
+}
+
+.form-input:focus {
+    border-color: #333;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
+
+/* 아이디/비번 찾기 링크 */
+.utility-links {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-bottom: 24px;
+    font-size: 13px;
+    color: #888;
+}
+
+.utility-links a {
+    color: #666;
+    text-decoration: none;
+}
+.utility-links a:hover {
+    text-decoration: underline;
+}
+
+.separator {
+    margin: 0 8px;
+    font-size: 10px;
+    color: #ccc;
+}
+
+/* 메인 버튼 그룹 */
+.btn-group.main-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.btn {
+    flex: 1;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+.btn-primary {
+    background-color: #222;
+    color: #fff;
+}
+
+.btn-signup {
+    background-color: #f0f0f0;
+    color: #333;
+}
+
+.btn:hover {
+    filter: brightness(0.9);
+}
+
+/* 구분선 스타일 */
+.divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 20px;
+    color: #999;
+    font-size: 13px;
+}
+
+.divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid #eee;
+}
+
+.divider span {
+    padding: 0 10px;
+}
+
+/* --- [핵심] 소셜 버튼 그리드 레이아웃 --- */
+.social-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2열 배치 */
+    gap: 10px; /* 버튼 사이 간격 */
+}
+
+.btn-social {
+    width: 100%;
+    padding: 10px;
+    border: none; /* 두꺼운 테두리 제거 */
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff; /* 기본 텍스트 색상을 흰색으로 통일 */
+    transition: transform 0.1s, opacity 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.btn-social:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.btn-social:active {
+    transform: translateY(0);
+}
+
+.btn-social i {
+    font-size: 16px;
+}
+
+/* --- 플랫폼별 브랜드 컬러 --- */
+
+/* 밝은 배경 버튼 (글자색 검정) */
+.btn-kakao { background-color: #FEE500; color: #3C1E1E; }
+.btn-google { background-color: #ffffff; color: #444; border: 1px solid #e0e0e0; }
+.btn-amazon { background-color: #FF9900; color: #000; }
+
+/* 어두운 배경 버튼 (글자색 흰색 - 기본값) */
+.btn-naver { background-color: #03C75A; }
+.btn-nate { background-color: #F53E50; }
+.btn-line { background-color: #06C755; }
+
+.btn-facebook { background-color: #1877F2; }
+.btn-instagram { background: linear-gradient(45deg, #405de6, #5851db, #833ab4, #c13584, #e1306c, #fd1d1d); }
+.btn-twitter { background-color: #000; }
+.btn-apple { background-color: #000; }
+.btn-microsoft { background-color: #2F2F2F; }
+.btn-linkedin { background-color: #0077B5; }
+.btn-github { background-color: #24292e; }
+.btn-slack { background-color: #4A154B; }
+.btn-discord { background-color: #5865F2; }
+.btn-whatsapp { background-color: #25D366; }
+
+.btn-tiktok { background-color: #000; }
+.btn-wechat { background-color: #07C160; }
+.btn-qq { background-color: #12B7F5; }
+.btn-baidu { background-color: #2932E1; }
+.btn-weibo { background-color: #E6162D; }
+
+.btn-telegram { background-color: #0088cc; }
+.btn-yandex { background-color: #FC3F1D; }
+.btn-vk { background-color: #0077FF; }
+
+/* 화면이 작을 때 (모바일) 1열로 변경하고 싶다면 아래 주석 해제 */
+@media (max-width: 400px) {
+    .social-grid {
+        grid-template-columns: 1fr;
+    }
+}
