@@ -15,6 +15,11 @@ import { type ResultSetHeader, type RowDataPacket } from 'mysql2';
 const router: Router = express.Router();
 
 // 1. 일반 회원가입
+
+// 1. 회원가입
+
+// 1. 일반 회원가입
+
 router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response<AuthResponse>) => {
     try {
         const { email, password, name, companyName } = req.body;

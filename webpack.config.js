@@ -8,6 +8,8 @@ const __dirname = path.dirname(__filename);
 export default {
     // 1. 모드 설정 (에러 로그의 경고 해결)
     mode: 'development',
+
+    devtool: 'eval-source-map',
     
     // 2. 진입점 설정 (기존 src/index.js 대신 실제 경로 지정)
     entry: './src/client/chatbot/chatbot.ts',
