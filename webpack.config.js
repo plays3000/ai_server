@@ -12,7 +12,7 @@ export default {
     devtool: 'eval-source-map',
     
     // 2. 진입점 설정 (기존 src/index.js 대신 실제 경로 지정)
-    entry: './src/client/chatbot/chatbot.ts',
+    entry: './src/client/chatbot.ts',
     
     // 3. TypeScript 처리 규칙
     module: {
