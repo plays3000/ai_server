@@ -1,13 +1,14 @@
 import { HeaderManager } from './header.js';
 import { FooterManager } from './footer.js';
-import type { FileStore } from './types.js';
+import { FileStore } from './types.js';
 import { VoiceRecorder } from './voicerecorder.js';
 
-// 챗봇 애플리케이션의 메인 컨트롤러 클래스
 class ChatbotApp {
     private chatContainer: HTMLElement;
+    // [확인] types.ts의 FileStore 인터페이스에도 video: File[]가 있어야 합니다.
     private filesData: FileStore = { image: [], video: [], audio: [], file: [] };
     
+    // UI Elements
     private titleInput: HTMLInputElement;
     private detailInput: HTMLTextAreaElement;
     private fileListArea: HTMLElement;
@@ -19,20 +20,20 @@ class ChatbotApp {
         this.detailInput = document.getElementById('reportDetail') as HTMLTextAreaElement;
         this.fileListArea = document.getElementById('fileListArea')!;
 
-        // 음성 녹음 완료 시 오디오 배열에 추가하고 UI 갱신
+        // 음성 녹음 완료 시 오디오 배열에 추가
         this.voiceRecorder = new VoiceRecorder((audioFile) => {
-            this.filesData.audio.push(audioFile);
+            this.filesData.audio.push(audioFile); // audio 배열로 저장
             this.renderFileList();
         });
 
         this.init();
     }
 
-    // 초기 설정 및 이벤트 바인딩
     private init(): void {
         new HeaderManager(() => this.resetChat());
         new FooterManager();
         
+        // 파일 그리드 영역 생성
         const fileGrid = document.createElement('div');
         fileGrid.className = 'file-grid';
         this.fileListArea.appendChild(fileGrid);
@@ -41,7 +42,7 @@ class ChatbotApp {
         this.setupFileEvents();
     }
 
-    // 입력창 관련 이벤트 설정
+    // --- 채팅 로직 ---
     private setupInputEvents(): void {
         const sendBtn = document.querySelector('.generate-btn');
         sendBtn?.addEventListener('click', () => this.generateReport());
@@ -54,13 +55,11 @@ class ChatbotApp {
         exampleBtn?.addEventListener('click', () => this.fillExampleData());
     }
 
-    // 예시 데이터 입력 기능
     private fillExampleData(): void {
         this.titleInput.value = '2024년 1분기 영업 실적 보고서';
-        this.detailInput.value = `- 주요 성과 요약\n- 지역별 매출 분석\n- 신규 고객 확보 현황`;
+        this.detailInput.value = `- 주요 성과 요약\n- 지역별 매출 분석 (그래프 포함)\n- 신규 고객 확보 현황\n- 2분기 목표 및 전략 제안`;
     }
 
-    // 보고서 생성 요청 및 채팅 UI 업데이트
     private generateReport(): void {
         const title = this.titleInput.value.trim();
         if (!title) {
@@ -68,7 +67,8 @@ class ChatbotApp {
             return;
         }
 
-        // 현재 선택된 파일들의 복사본 생성
+        // [중요] 파일을 비우기 전에 현재 상태를 복사(Clone)해서 넘겨야 함
+        // 객체 얕은 복사만 해도 File 객체는 참조 유지되므로 OK
         const currentFiles: FileStore = {
             image: [...this.filesData.image],
             video: [...this.filesData.video],
@@ -76,18 +76,18 @@ class ChatbotApp {
             file: [...this.filesData.file]
         };
 
-        // 사용자 메시지 화면 표시
+        // 사용자 메시지 추가 (파일 데이터 함께 전달)
         this.appendMessage('user', title, this.detailInput.value, currentFiles);
 
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
-        // 입력 데이터 초기화
+        // 입력창 및 파일 데이터 초기화
         this.titleInput.value = '';
         this.detailInput.value = '';
-        this.clearFiles();
+        this.clearFiles(); // 여기서 초기화되므로 위에서 복사해둔 currentFiles를 써야 함
 
-        // AI 응답 시뮬레이션 (추후 실제 API 연결 가능)
+        // AI 응답 시뮬레이션
         setTimeout(() => {
             const loadingEl = document.getElementById(loadingId);
             loadingEl?.remove();
@@ -95,13 +95,15 @@ class ChatbotApp {
         }, 2000);
     }
 
-    // 채팅창에 메시지 및 첨부파일 추가
+    // files 인자 추가 (FileStore 타입)
     private appendMessage(role: 'user' | 'ai', title: string, detail: string = '', files?: FileStore): void {
+        
+        // 1. 첨부파일 HTML 생성
         let attachmentHtml = '';
         if (files) {
             attachmentHtml = '<div class="msg-attachment-area">';
 
-            // 미디어 파일(이미지, 비디오) 렌더링
+            // (A) 이미지 & 비디오 (그리드 형태)
             const mediaFiles = [...files.image, ...files.video];
             if (mediaFiles.length > 0) {
                 attachmentHtml += '<div class="msg-media-grid">';
@@ -116,40 +118,49 @@ class ChatbotApp {
                 attachmentHtml += '</div>';
             }
 
-            // 일반 파일 및 오디오 리스트 렌더링
+            // (B) 오디오 & 일반 파일 (리스트 형태)
             const docFiles = [...files.audio, ...files.file];
             if (docFiles.length > 0) {
                 attachmentHtml += '<div class="msg-file-list">';
+                
+                // 오디오
                 files.audio.forEach(file => {
                     attachmentHtml += `
                         <div class="msg-file-item">
-                            <i class="fas fa-volume-up"></i> <span>${file.name}</span>
-                        </div>`;
+                            <i class="fas fa-volume-up"></i> 
+                            <span>${file.name}</span>
+                            </div>`;
                 });
+                
+                // 일반 파일
                 files.file.forEach(file => {
                     attachmentHtml += `
                         <div class="msg-file-item">
-                            <i class="fas fa-file-alt"></i> <span>${file.name}</span>
+                            <i class="fas fa-file-alt"></i> 
+                            <span>${file.name}</span>
                         </div>`;
                 });
                 attachmentHtml += '</div>';
             }
+
             attachmentHtml += '</div>';
         }
 
+        // 2. 최종 HTML 조립
         const html = `
             <div class="message-row ${role}">
                 <div class="bubble ${role}-bubble">
                     <strong>${title}</strong>
                     ${detail ? `<br>${detail.replace(/\n/g, '<br>')}` : ''}
+                    
                     ${attachmentHtml}
                 </div>
             </div>`;
             
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
+    
     }
 
-    // 로딩 애니메이션 표시
     private appendLoading(id: string): void {
         const html = `
             <div class="message-row ai" id="${id}">
@@ -160,82 +171,97 @@ class ChatbotApp {
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
     }
 
-    // 채팅창 내용 및 파일 초기화
     public resetChat(): void {
         this.chatContainer.innerHTML = `
             <div class="message-row ai">
-                <div class="bubble ai-bubble">안녕하세요! 대화가 초기화되었습니다.</div>
+                <div class="bubble ai-bubble">안녕하세요! 초기화되었습니다.</div>
             </div>`;
         this.clearFiles();
     }
 
-    // 파일 첨부 관련 버튼 이벤트 설정
+    // --- 파일 처리 로직 ---
     private setupFileEvents(): void {
         const fileBtn = document.getElementById('btnAttachFile');
         const fileInput = document.getElementById('realFileInput') as HTMLInputElement;
         const imageBtn = document.getElementById('btnAttachImage');
         const imageInput = document.getElementById('realImageInput') as HTMLInputElement;
-        const voiceRecordBtn = document.getElementById('btnVoiceRecord');
 
+        // 일반 파일 버튼
         fileBtn?.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files) this.handleFiles(target.files);
         });
 
+        // 이미지 전용 버튼 (추가됨)
         imageBtn?.addEventListener('click', () => imageInput.click());
         imageInput.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files) this.handleFiles(target.files);
         });
 
+        // 음성 녹음 버튼
+        const voiceRecordBtn = document.getElementById('btnVoiceRecord');
         voiceRecordBtn?.addEventListener('click', () => this.voiceRecorder.startRecording());
     }
 
-    // 업로드된 파일을 종류별로 분류하여 저장
     private handleFiles(files: FileList): void {
         Array.from(files).forEach(file => {
-            if (file.type.startsWith('image/')) this.filesData.image.push(file);
-            else if (file.type.startsWith('video/')) this.filesData.video.push(file);
-            else if (file.type.startsWith('audio/')) this.filesData.audio.push(file);
-            else this.filesData.file.push(file);
+            if (file.type.startsWith('image/')) {
+                this.filesData.image.push(file);
+            } else if (file.type.startsWith('video/')) {
+                this.filesData.video.push(file);
+            } else if (file.type.startsWith('audio/')) {
+                this.filesData.audio.push(file);
+            } else {
+                this.filesData.file.push(file);
+            }
         });
         this.renderFileList();
     }
 
-    // 첨부된 파일 목록을 UI에 렌더링
     private renderFileList(): void {
         const fileGrid = this.fileListArea.querySelector('.file-grid');
         if (!fileGrid) return;
         
         fileGrid.innerHTML = '';
-        const totalFiles = this.filesData.image.length + this.filesData.video.length + 
-                           this.filesData.audio.length + this.filesData.file.length;
+        
+        const totalFiles = this.filesData.image.length + 
+                           this.filesData.video.length + 
+                           this.filesData.audio.length + 
+                           this.filesData.file.length;
 
         if (totalFiles === 0) {
             this.fileListArea.classList.remove('active');
             return;
         }
 
-        ['image', 'video', 'audio', 'file'].forEach(type => {
-            this.renderCategory(fileGrid, type as keyof FileStore);
-        });
+        // 각 카테고리별 렌더링
+        this.renderCategory(fileGrid, 'image');
+        this.renderCategory(fileGrid, 'video');
+        this.renderCategory(fileGrid, 'audio');
+        this.renderCategory(fileGrid, 'file');
 
         this.fileListArea.classList.add('active');
     }
     
-    // 카테고리별 파일 아이템 생성
+    // [중요 수정됨] DOM 생성 로직 구현
     private renderCategory(container: Element, type: keyof FileStore): void {
         this.filesData[type].forEach((file, index) => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item-box';
 
+            // 1. 삭제 버튼 (type과 index를 함께 전달해야 함)
             const removeBtn = document.createElement('div');
             removeBtn.className = 'file-remove-btn';
             removeBtn.innerHTML = '&times;';
-            removeBtn.onclick = () => this.removeFile(type, index);
+            removeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.removeFile(type, index); // ★ 핵심 수정: 종류와 인덱스를 넘김
+            });
             fileItem.appendChild(removeBtn);
 
+            // 2. 썸네일/아이콘 영역
             const thumbnail = document.createElement('div');
             thumbnail.className = 'thumbnail';
 
@@ -248,32 +274,37 @@ class ChatbotApp {
             } else {
                 const icon = document.createElement('div');
                 icon.className = 'thumb-icon';
-                const iconClass = type === 'video' ? 'fa-film' : (type === 'audio' ? 'fa-music' : 'fa-file-alt');
+                
+                let iconClass = 'fa-file-alt'; // 기본값
+                if (type === 'video') iconClass = 'fa-film';
+                else if (type === 'audio') iconClass = 'fa-music';
+
                 icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
                 thumbnail.appendChild(icon);
             }
+            fileItem.appendChild(thumbnail);
 
+            // 3. 파일명
             const fileName = document.createElement('div');
             fileName.className = 'file-name';
             fileName.textContent = file.name;
-            fileItem.appendChild(thumbnail);
+            fileName.title = file.name;
             fileItem.appendChild(fileName);
+
             container.appendChild(fileItem);
         });
     }
 
-    // 특정 파일 삭제
+    // [중요 수정됨] 삭제 시 어떤 배열(type)에서 지울지 알아야 함
     private removeFile(type: keyof FileStore, index: number): void {
         this.filesData[type].splice(index, 1);
         this.renderFileList();
     }
 
-    // 모든 파일 데이터 삭제
     private clearFiles(): void {
         this.filesData = { image: [], video: [], audio: [], file: [] };
         this.renderFileList();
     }
 }
 
-// 앱 인스턴스 생성
 new ChatbotApp();

@@ -1,50 +1,80 @@
-// 음성 녹음 및 파일 변환 클래스
-export class VoiceRecorder {
-    private mediaRecorder: MediaRecorder | null = null;
-    private audioChunks: Blob[] = [];
-    private onRecordComplete: (audioFile: File) => void;
+import { FileStore } from './types.js';
 
-    // 녹음 완료 시 실행할 콜백 함수를 주입받음
-    constructor(onRecordComplete: (audioFile: File) => void) {
-        this.onRecordComplete = onRecordComplete;
+export class VoiceRecorder {
+    private recorder: MediaRecorder | null = null;
+    private audioChunks: Blob[] = [];
+    public isRecording: boolean = false;
+    private timerInterval: number | null = null;
+
+    private recorderUi: HTMLElement;
+    private timerEl: HTMLElement;
+    private stopBtn: HTMLButtonElement;
+
+    constructor(private onStop: (file: File) => void) {
+        this.recorderUi = document.getElementById('voiceRecorderUi')!;
+        this.timerEl = document.getElementById('recordTimer')!;
+        this.stopBtn = document.getElementById('stopRecordBtn') as HTMLButtonElement;
+
+        this.stopBtn.addEventListener('click', () => this.stopRecording());
     }
 
-    // 마이크 권한 획득 및 녹음 시작
     async startRecording(): Promise<void> {
+        if (this.isRecording) return;
+
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            this.mediaRecorder = new MediaRecorder(stream);
-            this.audioChunks = [];
+            this.recorder = new MediaRecorder(stream);
 
-            // 데이터 가용 시 청크 배열에 추가
-            this.mediaRecorder.ondataavailable = (event) => {
+            this.recorder.addEventListener('dataavailable', (event: BlobEvent) => {
                 this.audioChunks.push(event.data);
-            };
+            });
 
-            // 녹음 중지 시 Blob 생성 및 File 객체 전달
-            this.mediaRecorder.onstop = () => {
+            this.recorder.addEventListener('stop', () => {
                 const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
-                const audioFile = new File([audioBlob], `voice_record_${Date.now()}.wav`, { type: 'audio/wav' });
-                this.onRecordComplete(audioFile);
-            };
+                const audioFile = new File([audioBlob], `recording_${new Date().toISOString()}.wav`, { type: 'audio/wav' });
+                this.onStop(audioFile); // Pass the file to the callback
+                this.audioChunks = [];
+                stream.getTracks().forEach(track => track.stop());
+            });
 
-            this.mediaRecorder.start();
-            console.log('녹음 시작');
-            
-            // 5초 후 자동 종료 (필요에 따라 조정 가능)
-            setTimeout(() => this.stopRecording(), 5000);
+            this.recorder.start();
+            this.isRecording = true;
+            this.toggleUi(true);
+            this.startTimer();
 
         } catch (error) {
-            console.error('마이크 접근 실패:', error);
-            alert('마이크 접근 권한이 필요합니다.');
+            console.error('Error accessing microphone:', error);
+            alert('마이크에 접근할 수 없습니다. 권한을 확인해주세요.');
         }
     }
 
-    // 녹음 중지 처리
     stopRecording(): void {
-        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
-            this.mediaRecorder.stop();
-            console.log('녹음 중지');
+        if (!this.isRecording || !this.recorder) return;
+        this.recorder.stop();
+        this.isRecording = false;
+        this.toggleUi(false);
+        this.stopTimer();
+    }
+
+    toggleUi(isRecording: boolean): void {
+        this.recorderUi.style.display = isRecording ? 'flex' : 'none';
+    }
+
+    private startTimer(): void {
+        let seconds = 0;
+        this.timerEl.textContent = '00:00';
+        this.timerInterval = window.setInterval(() => {
+            seconds++;
+            const minutes = Math.floor(seconds / 60).toString().padStart(2, '0');
+            const secs = (seconds % 60).toString().padStart(2, '0');
+            this.timerEl.textContent = `${minutes}:${secs}`;
+        }, 1000);
+    }
+
+    private stopTimer(): void {
+        if (this.timerInterval) {
+            clearInterval(this.timerInterval);
+            this.timerInterval = null;
         }
     }
 }

@@ -3,30 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI 기반 보고서 생성기</title>
+    <title>AI기반보고서생성기</title>
     
-    // 외부 아이콘 폰트
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
-    // 통합된 CSS 경로 (public/css/ 하위에서 바로 참조)
-    <link rel="stylesheet" href="/css/chatbot.css">
-    <link rel="stylesheet" href="/css/responsive.css">
-    <link rel="stylesheet" href="/css/footer.css">
-    <link rel="stylesheet" href="/css/header.css">
-    <link rel="stylesheet" href="/css/inputbox.css">
-    <link rel="stylesheet" href="/css/orientation.css">
-    <link rel="stylesheet" href="/css/settings.css">
-    <link rel="stylesheet" href="/css/voicerecorder.css">
+    <link rel="stylesheet" href="report-generator-chatbot/chatbot.css">
+    <link rel="stylesheet" href="report-generator-chatbot/responsive.css">
+    <link rel="stylesheet" href="report-generator-chatbot/footer.css">
+    <link rel="stylesheet" href="report-generator-chatbot/header.css">
+    <link rel="stylesheet" href="report-generator-chatbot/inputbox.css">
+    <link rel="stylesheet" href="report-generator-chatbot/orientation.css">
+    <link rel="stylesheet" href="report-generator-chatbot/settings.css">
+    <link rel="stylesheet" href="report-generator-chatbot/voicerecorder.css">
 </head>
 <body>
 
-    // 컴포넌트 포함 (views/components/ 및 views/setups/ 경로 참조)
     <%- include('components/header') %>
+
     <%- include('components/chat-area') %>
+
     <%- include('components/inputbox') %>
+
     <%- include('setups/settings') %>
 
-    // Webpack으로 빌드된 통합 번들 파일
-    <script src="/js/chatbot.bundle.js"></script>
+    <script type="module" src="report-generator-chatbot/chatbot.js"></script>
 </body>
 </html>

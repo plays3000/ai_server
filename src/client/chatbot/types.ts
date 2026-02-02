@@ -1,4 +1,4 @@
-// 파일 저장소 구조 정의 (종류별로 File 객체 배열 관리)
+// [추가됨] 파일 저장소 타입 정의
 export interface FileStore {
     image: File[];
     video: File[];
@@ -6,14 +6,12 @@ export interface FileStore {
     file: File[];
 }
 
-// 채팅 메시지 인터페이스 (작성자, 내용, 첨부된 파일들)
 export interface ChatMessage {
     role: 'user' | 'ai';
     content: string;
-    files?: FileStore;
+    files?: FileStore; // [수정됨] File[] -> FileStore (구조 맞춤)
 }
 
-// 애플리케이션 공통 설정 (테마, 언어, 작성 모드 등)
 export interface AppSettings {
     theme: 'light' | 'dark' | 'blue';
     language: 'en' | 'ko' | 'zh' | 'ja';
