@@ -8,6 +8,10 @@
     "forceConsistentCasingInFileNames": true,
     "rootDir": "./src",
     "outDir": "./dist",
+    "baseUrl": ".", 
+    "paths": {
+      "@config": ["./config.json"] 
+    },
     
     // [레거시 제거] 이제 모든 코드가 TS이므로 JS 허용 옵션 제거
     "allowJs": false,

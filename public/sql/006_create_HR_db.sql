@@ -1,3 +1,5 @@
+USE gemini_db;
+
 CREATE TABLE IF NOT EXISTS Roll_rank (
 	rank_code INT(5) PRIMARY KEY,
     rank_name TEXT NOT NULL

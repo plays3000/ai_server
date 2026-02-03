@@ -1,3 +1,5 @@
+USE gemini_db;
+
 CREATE TABLE IF NOT EXISTS Client_list (
 	client_code VARCHAR(50) PRIMARY KEY,
     company_name VARCHAR(20) not null,

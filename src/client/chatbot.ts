@@ -2,9 +2,10 @@ import { HeaderManager } from './header.js';
 import { FooterManager } from './footer.js';
 import type { FileStore } from './types.js';
 import { VoiceRecorder } from './voicerecorder.js';
+import configs from "#config" with { type: "json" };
 
 // 챗봇 애플리케이션의 메인 컨트롤러 클래스
-class ChatbotApp {
+export class ChatbotApp {
     private chatContainer: HTMLElement;
     private filesData: FileStore = { image: [], video: [], audio: [], file: [] };
     
@@ -84,7 +85,24 @@ class ChatbotApp {
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
-        // 3. 서버로 보낼 데이터 준비
+        // 3. 파일 업로드 갯수 제한
+        const limit = configs.maxCount;
+        const validationErrors: string[] = [];
+
+        if (currentFiles.image.length > limit) validationErrors.push(`이미지는 최대 ${limit}개까지 가능합니다.`);
+        if (currentFiles.video.length > limit) validationErrors.push(`비디오는 최대 ${limit}개까지 가능합니다.`);
+        if (currentFiles.audio.length > limit) validationErrors.push(`오디오는 최대 ${limit}개까지 가능합니다.`);
+        if (currentFiles.file.length > limit) validationErrors.push(`일반 파일은 최대 ${limit}개까지 가능합니다.`);
+
+        if (validationErrors.length > 0) {
+            alert(validationErrors.join('\n'));
+            // 로딩 표시가 이미 추가되었다면 제거
+            const loadingEl = document.getElementById(loadingId);
+            loadingEl?.remove();
+            return;
+        }
+
+        // 4. 서버로 보낼 데이터 준비
         const formData = new FormData();
         formData.append('message', `${title}\n${userInput}`); // message 변수 대신 조합해서 전달
 
@@ -311,6 +329,3 @@ class ChatbotApp {
         this.renderFileList();
     }
 }
-
-// 앱 인스턴스 생성
-new ChatbotApp();

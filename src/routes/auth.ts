@@ -14,72 +14,112 @@ import { type ResultSetHeader, type RowDataPacket } from 'mysql2';
 
 const router: Router = express.Router();
 
-// 1. 일반 회원가입
+/**
+ * [Helper] 랜덤 초대코드 생성 함수
+ * 회사명 앞 3글자 + 랜덤 4자리 조합 (예: GOL-X82A)
+ */
+const generateInviteCode = (name: string): string => {
+    const cleanName = name.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    const prefix = (cleanName.length >= 3 ? cleanName.substring(0, 3) : cleanName.padEnd(3, 'X'));
+    const randomStr = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `${prefix}-${randomStr}`;
+};
 
-// 1. 회원가입
-
-// 1. 일반 회원가입
-
+// =========================================================================
+// 1. 회원가입 API (그룹/법인 생성 및 초대 코드 합류 로직 포함)
+// =========================================================================
 router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response<AuthResponse>) => {
     try {
-        const { email, password, name, companyName } = req.body;
+        const { 
+            email, password, name, phone, 
+            type, 
+            companyName, groupName, bizNum,
+            inviteCode,
+            dept, position
+        } = req.body;
 
-        if (!email || !password || !name) {
-            return res.status(400).json({ success: false, message: '모든 필드를 입력해주세요.' });
+        // 필수값 검증
+        if (!email || !password || !name || !phone || !type) {
+            return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
         }
 
-        // 이메일 중복 체크
-        const [existingUsers] = await pool.query<User[]>(
-            'SELECT id FROM users WHERE email = ?',
-            [email]
+        // 이메일 및 전화번호 중복 체크
+        const [existing] = await pool.query<RowDataPacket[]>(
+            'SELECT id FROM users WHERE email = ? OR phone = ?',
+            [email, phone]
         );
-
-        if (existingUsers.length > 0) {
-            return res.status(409).json({ success: false, message: '이미 존재하는 이메일입니다.' });
+        
+        if (existing.length > 0) {
+            return res.status(409).json({ success: false, message: '이미 가입된 이메일 또는 전화번호입니다.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, authConfig.bcryptRounds);
         let companyId: number;
         let userRole: 'admin' | 'user';
 
-        // 회사(워크스페이스) 처리 로직
-        if (companyName && companyName.trim() !== '') {
+        // -----------------------------------------------------------------
+        // [Case A] 신규 법인/그룹 생성 (관리자 권한)
+        // -----------------------------------------------------------------
+        if (type === 'create') {
+            if (!companyName) {
+                return res.status(400).json({ success: false, message: "법인명은 필수입니다." });
+            }
+
+            const newInviteCode = generateInviteCode(companyName);
+
+            // 회사(법인) 정보 저장
+            const [result] = await pool.query<ResultSetHeader>(
+                'INSERT INTO companies (name, group_name, biz_num, invite_code) VALUES (?, ?, ?, ?)',
+                [companyName, groupName || null, bizNum || null, newInviteCode]
+            );
+            
+            companyId = result.insertId;
+            userRole = 'admin'; 
+            console.log(`🏢 신규 법인 생성: ${companyName} (초대코드: ${newInviteCode})`);
+        } 
+        // -----------------------------------------------------------------
+        // [Case B] 기존 법인 합류 (일반 직원 권한)
+        // -----------------------------------------------------------------
+        else if (type === 'join') {
+            if (!inviteCode) {
+                return res.status(400).json({ success: false, message: "초대 코드를 입력해주세요." });
+            }
+
             const [companies] = await pool.query<RowDataPacket[]>(
-                'SELECT id FROM companies WHERE name = ?',
-                [companyName.trim()]
+                'SELECT id, name FROM companies WHERE invite_code = ?',
+                [inviteCode]
             );
 
-            if (companies.length > 0) {
-                companyId = (companies[0] as { id: number }).id;
-                userRole = 'user'; // 기존 회사에 가입하면 일반 유저
-            } else {
-                const [companyResult] = await pool.query<ResultSetHeader>(
-                    'INSERT INTO companies (name) VALUES (?)',
-                    [companyName.trim()]
-                );
-                companyId = companyResult.insertId;
-                userRole = 'admin'; // 새 회사를 만들면 관리자
+            const foundCompany = companies[0]; // TS 에러 방지를 위한 변수 할당
+
+            if (!foundCompany) {
+                return res.status(404).json({ success: false, message: "유효하지 않은 초대 코드입니다." });
             }
-        } else {
-            // 회사명 미입력 시 개인 워크스페이스 생성
-            const [companyResult] = await pool.query<ResultSetHeader>(
-                'INSERT INTO companies (name) VALUES (?)',
-                [`${name}의 워크스페이스`]
-            );
-            companyId = companyResult.insertId;
-            userRole = 'admin';
+
+            companyId = foundCompany.id;
+            userRole = 'user'; 
+        } 
+        else {
+            return res.status(400).json({ success: false, message: "잘못된 가입 유형입니다." });
         }
 
+        // 최종 유저 데이터 저장
         await pool.query<ResultSetHeader>(
-            'INSERT INTO users (email, password, name, company_id, role) VALUES (?, ?, ?, ?, ?)',
-            [email, hashedPassword, name, companyId, userRole]
+            `INSERT INTO users (email, password, name, phone, company_id, role, dept, position) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                email, hashedPassword, name, phone, 
+                companyId, userRole, 
+                dept || '미정', position || '사원'
+            ]
         );
 
         res.status(201).json({
             success: true,
             message: userRole === 'admin' 
-                ? '회원가입이 완료되었습니다. (관리자)' 
-                : `${companyName}의 사원으로 가입되었습니다.`
+                ? '법인 생성 및 회원가입이 완료되었습니다.' 
+                : '소속 법인 합류 및 회원가입이 완료되었습니다.',
+            role: userRole
         });
 
     } catch (error) {
@@ -88,7 +128,9 @@ router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response
     }
 });
 
-// 2. 일반 로그인
+// =========================================================================
+// 2. 로그인 API
+// =========================================================================
 router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthResponse>) => {
     try {
         const { email, password } = req.body;
@@ -97,28 +139,41 @@ router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthR
             return res.status(400).json({ success: false, message: '이메일과 비밀번호를 입력해주세요.' });
         }
 
-        const [users] = await pool.query<User[]>(
+        // [수정] User 인터페이스와 mysql2의 RowDataPacket을 교차 타입(&)으로 결합하여 타입 에러 해결
+        const [users] = await pool.query<(User & RowDataPacket)[]>(
             'SELECT * FROM users WHERE email = ?',
             [email]
         );
 
         const user = users[0];
+
+        // 유저가 존재하지 않거나 비밀번호가 없는 경우 처리
         if (!user || !user.password) {
             return res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
         }
 
+        // 비밀번호 검증
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
             return res.status(401).json({ success: false, message: '이메일 또는 비밀번호가 올바르지 않습니다.' });
         }
 
+        // [핵심] JWT 토큰에 데이터 격리를 위한 company_id, role, dept, position 등을 포함
         const token = jwt.sign(
-            { id: user.id, email: user.email },
+            { 
+                id: user.id, 
+                email: user.email, 
+                company_id: user.company_id, // 향후 모든 API에서 데이터 격리에 사용됨
+                name: user.name,
+                role: user.role,
+                dept: user.dept,
+                position: user.position
+            },
             authConfig.jwtSecret,
             { expiresIn: authConfig.jwtExpiresIn as any }
         );
 
-        // 비밀번호를 제외한 정보 반환
+        // 보안을 위해 비밀번호 필드를 제외하고 응답
         const { password: _, ...userWithoutPassword } = user;
 
         res.json({
@@ -134,26 +189,27 @@ router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthR
     }
 });
 
-// 3. 소셜 로그인 (구글)
+// =========================================================================
+// 3. 소셜 로그인 (Passport)
+// =========================================================================
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
 router.get('/google/callback', 
     passport.authenticate('google', { session: false, failureRedirect: '/test-auth.html' }),
     async (req: Request, res: Response) => {
         const user = req.user as User;
-        const token = jwt.sign({ id: user.id, email: user.email }, authConfig.jwtSecret, { expiresIn: '24h' });
+        const token = jwt.sign({ id: user.id, email: user.email, company_id: user.company_id }, authConfig.jwtSecret, { expiresIn: '24h' });
         res.redirect(`/test-auth.html?token=${token}&name=${encodeURIComponent(user.name)}`);
     }
 );
 
-// 4. 소셜 로그인 (네이버)
 router.get('/naver', passport.authenticate('naver'));
 
 router.get('/naver/callback',
     passport.authenticate('naver', { session: false, failureRedirect: '/test-auth.html' }),
     async (req: Request, res: Response) => {
         const user = req.user as User;
-        const token = jwt.sign({ id: user.id, email: user.email }, authConfig.jwtSecret, { expiresIn: '24h' });
+        const token = jwt.sign({ id: user.id, email: user.email, company_id: user.company_id }, authConfig.jwtSecret, { expiresIn: '24h' });
         res.redirect(`/test-auth.html?token=${token}&name=${encodeURIComponent(user.name)}`);
     }
 );

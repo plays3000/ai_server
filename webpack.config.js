@@ -1,20 +1,15 @@
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// ESM 환경에서 __dirname 정의
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-    // 1. 모드 설정 (에러 로그의 경고 해결)
     mode: 'development',
-
     devtool: 'eval-source-map',
     
-    // 2. 진입점 설정 (기존 src/index.js 대신 실제 경로 지정)
-    entry: './src/client/chatbot.ts',
+    entry: './src/index.js',
     
-    // 3. TypeScript 처리 규칙
     module: {
         rules: [
             {
@@ -25,15 +20,19 @@ export default {
         ],
     },
     
-    // 4. 확장자 처리
+    // 4. 확장자 및 별칭(Alias) 처리
     resolve: {
-        extensions: ['.ts', '.js'],
+        // .json 확장자를 추가해야 config.json을 찾을 수 있습니다.
+        extensions: ['.ts', '.js', '.json'], 
         extensionAlias: {
             '.js': ['.ts', '.js'],
         },
+        // 별칭 추가
+        alias: {
+            "@config": path.resolve(__dirname, "config.json"),
+        },
     },
     
-    // 5. 출력 설정
     output: {
         filename: 'chatbot.bundle.js',
         path: path.resolve(__dirname, 'public/js'),

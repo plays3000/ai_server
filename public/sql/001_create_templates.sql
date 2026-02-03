@@ -1,3 +1,6 @@
+DROP DATABASE IF EXISTS company1;
+USE  gemini_db;
+
 CREATE TABLE IF NOT EXISTS document_templates (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tenant_id INT NOT NULL,
