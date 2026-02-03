@@ -6,10 +6,16 @@ const __dirname = path.dirname(__filename);
 
 export default {
     mode: 'development',
+    optimization: {
+        minimize: false, // 난독화를 방지
+    },
     devtool: 'eval-source-map',
     
     entry: './src/index.js',
-    
+    output: {
+        filename: "./public/main.js",
+        path: path.resolve(__dirname, "public"),
+    },
     module: {
         rules: [
             {

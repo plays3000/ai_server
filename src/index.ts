@@ -1,3 +1,4 @@
 import { main } from "./main.js";
 
-await main();
+// webpack 진입 경로 지정
+main();
