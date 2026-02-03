@@ -7,7 +7,7 @@ import { pool } from '../config/dbConfig.js';
 import { model } from '../config/geminiConfig.js';
 import { type RowDataPacket, type ResultSetHeader } from 'mysql2';
 
-const router: Router = express.Router();
+export const router: Router = express.Router();
 
 const templateDir = 'uploads/templates/';
 const sampleDir = 'uploads/samples/';
@@ -74,7 +74,7 @@ async function extractSheetData(filePath: string): Promise<string> {
     return content;
 }
 
-router.post('/learn', upload.fields([
+router.post('/templates', upload.fields([
     { name: 'file', maxCount: 1 },
     { name: 'samples', maxCount: 10 }
 ]), async (req: Request, res: Response) => {
@@ -167,18 +167,6 @@ router.post('/learn', upload.fields([
         console.error("❌ 오류:", error);
         res.status(500).json({ error: error.message || "서버 오류" });
     }
-});
-
-// 나머지 라우트(list, delete)는 기존과 동일하게 유지...
-router.get('/list', async (req, res) => {
-    const [rows] = await pool.query('SELECT * FROM templates WHERE is_active = 1 ORDER BY name');
-    res.json(rows);
-});
-
-router.post('/delete', async (req, res) => {
-    const { name } = req.body;
-    await pool.query('UPDATE templates SET is_active = 0 WHERE name = ?', [name]);
-    res.json({ success: true });
 });
 
 export default router;

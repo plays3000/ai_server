@@ -2,6 +2,7 @@ import express, { type Request, type Response, type NextFunction } from 'express
 import path from 'path';
 import { fileURLToPath } from 'url';
 import 'dotenv/config';
+import fs from 'fs';
 import multer from 'multer'; // multer 임포트 확인
 
 // 설정 및 인증 모듈 임포트
@@ -13,6 +14,7 @@ import passport from './config/passportConfig.js';
 import authRouter from './routes/auth.js';
 import excelRouter from './routes/excel.js';
 import chatRouter from './routes/chat.js';
+import templateRouter from './routes/templetes.js';
 
 import {insertJsonToDb} from './backend/json_to_db.js';
 
@@ -50,11 +52,27 @@ app.use(passport.session());
 // 라우터 연결 (관심사 분리)
 app.use('/auth', authRouter);
 app.use('/excel', excelRouter);
-app.use('/chat', chatRouter);
+app.use('/', chatRouter);
+app.use('/templates', templateRouter);
 
 // 메인 페이지 렌더링
 app.get('/', (req: Request, res: Response) => {
     res.render('chatbot');
+});
+
+app.get('/templates', (req: Request, res: Response) => {
+    // dist 폴더 내부에서 밖으로 한 칸 나가서 views 폴더로 진입
+    const filePath = path.resolve(__dirname, '..', 'views', 'test-learn.html');
+
+    // 디버깅을 위해 서버 터미널에 실제 찾는 경로를 출력해보세요
+    console.log("🔍 찾는 파일 경로:", filePath);
+
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        console.error("❌ 파일이 존재하지 않습니다!");
+        res.status(404).send("파일을 찾을 수 없습니다.");
+    }
 });
 
 
