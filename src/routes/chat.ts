@@ -4,7 +4,7 @@ import fs from 'fs';
 import ExcelJS from 'exceljs';
 import path from 'path';
 import { pool } from '../config/dbConfig.js';
-import { model } from '../config/geminiConfig.js';
+import { model, chatbot } from '../config/geminiConfig.js';
 import { type RowDataPacket } from 'mysql2';
 import {fileToGenerativePart} from '../client/readFiles.js';
 import configs from '../../config.json' with { type: "json" };
@@ -63,29 +63,15 @@ async function generateWithRetry(prompt: string, retries = 3, delay = 2000) {
     }
 }
 
-// [Interface] 
-interface TemplateRow extends RowDataPacket {
-    file_path: string;
-    schema_def: any;
-    name: string;
-}
-
-//메인 채팅 라우트
-router.post('/', upload.array('mediaFile', configs.maxCount * 4), async (req, res) => {
+async function fileAnalysis(message: any, chatInputs: any[], files: Express.Multer.File[], req: any, res: any){
     try {
-        const user = { id: 1, name: "김AI", dept: "개발팀", position: "대리" };
-        const files = req.files as Express.Multer.File[]; 
-        const { message } = req.body;
-        const chatInputs = [];
-
         // 1. 텍스트 메시지 추가
         if (message) {
             chatInputs.push(message);
         }
 
         // 2. 여러 파일 처리 (req.files 사용)
-        if (files && files.length > 0) {
-            files.forEach(file => {
+        files.forEach(file => {
                 const mimeType = file.mimetype;
                 // 이미지 또는 PDF만 필터링하여 추가
                 if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
@@ -93,7 +79,6 @@ router.post('/', upload.array('mediaFile', configs.maxCount * 4), async (req, re
                     chatInputs.push(mediaPart);
                 }
             });
-        }
 
         if (chatInputs.length === 0) {
              return res.status(400).json({ reply: "분석할 내용이 없습니다." });
@@ -112,18 +97,218 @@ router.post('/', upload.array('mediaFile', configs.maxCount * 4), async (req, re
 
         // ... 나머지 DB 저장 및 응답 로직
         const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
-        const logMsg = message || (req.file ? `[파일: ${req.file.originalname}]` : "데이터 없음");
+        // const logMsg = message || (files ? `[파일: ${req.file.originalname}]` : "데이터 없음");
+        const logMsg = message || (files ? `[파일: ${req.file.originalname}]` : "데이터 없음");
         await pool.query(sql, [logMsg, reply]);
 
         res.json({ reply: reply });
 
-    } catch (error) {
+    } 
+    
+    catch (error) {
         // 에러 발생 시에도 파일이 남아있다면 삭제
         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
         console.error("비서 서비스 에러:", error);
         res.status(500).json({ error: "분석 중 오류 발생" });
     }
+};
+
+// 파일 삭제 공통 함수
+function cleanupFiles(files: Express.Multer.File[]) {
+    files?.forEach(file => {
+        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    });
+}
+
+// 엑셀/이미지/PDF를 Gemini용 입력 데이터로 변환
+async function prepareChatInputs(message: string, files: Express.Multer.File[]) {
+    const chatInputs: any[] = [];
+    let fileContext = "";
+
+    if (message) chatInputs.push(message);
+
+    for (const file of files) {
+        const mimeType = file.mimetype;
+        if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+            chatInputs.push(fileToGenerativePart(file.path, mimeType));
+        } 
+        else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+            const result = await extractSheetData(file.path);
+            if (result) {
+                const info = `\n[참고 파일(${file.originalname}) 분석]:\n${result}\n`;
+                fileContext += info;
+                chatInputs.push(info);
+            }
+        }
+    }
+    return { chatInputs, fileContext };
+}
+
+// Step 1: 사용자 의도 파악
+async function classifyIntent(message: string): Promise<string> {
+    const prompt = `사용자 메시지를 분석해 'REPORT' 또는 'CHAT' 중 하나만 출력해: "${message}"`;
+    const result = await generateWithRetry(prompt);
+    return result?.response.text().trim().toUpperCase() || 'CHAT';
+}
+
+// Step 2: 엑셀 보고서 생성 핵심 로직
+async function generateExcelReport(template: TemplateRow, extractedData: any, user: any) {
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.readFile(template.file_path);
+    const worksheet = workbook.getWorksheet(1) || workbook.worksheets[0];
+
+    if (!worksheet) throw new Error("유효한 워크시트가 없습니다.");
+
+    const schema = typeof template.schema_def === 'string' ? JSON.parse(template.schema_def) : template.schema_def;
+    const mappingList = schema.mappings || [];
+
+    mappingList.forEach((map: any) => {
+        if (extractedData[map.key]) {
+            const cell = worksheet.getCell(map.cell);
+            cell.value = extractedData[map.key];
+            cell.alignment = { wrapText: true, vertical: 'middle' };
+        }
+    });
+
+    const fileName = `${getTodayString()}_${user.name}_보고서.xlsx`;
+    const savePath = path.join(generatedDir, fileName);
+    await workbook.xlsx.writeFile(savePath);
+
+    return { fileName, downloadUrl: `/chat/download/generated/${encodeURIComponent(fileName)}` };
+}
+
+// [Interface] 
+interface TemplateRow extends RowDataPacket {
+    file_path: string;
+    schema_def: any;
+    name: string;
+}
+
+//메인 채팅 라우트
+router.post('/', upload.array('mediaFile', configs.maxCount * 4), async (req: Request, res: Response) => {
+    const user = { id: 1, name: "김AI", dept: "개발팀", position: "대리" };
+    const { message } = req.body;
+    const files = req.files as Express.Multer.File[];
+
+    try {
+        // 1. 입력 데이터 및 컨텍스트 준비
+        const { chatInputs, fileContext } = await prepareChatInputs(message, files);
+        if (chatInputs.length === 0) return res.status(400).json({ reply: "내용이 없습니다." });
+
+        // 2. 의도 파악
+        const intent = await classifyIntent(message);
+
+        // 3. 분기 처리
+        if (intent !== 'REPORT') {
+            const result = await model.generateContent(chatInputs);
+            const reply = result.response.text();
+            await pool.query('INSERT INTO chat_history (user_id, user_msg, ai_reply) VALUES (?, ?, ?)', [user.id, message || "파일", reply]);
+            cleanupFiles(files);
+            return res.json({ reply, downloadUrl: null });
+        }
+
+        // 4. REPORT 모드: 템플릿 조회 및 데이터 추출
+        const [templates] = await pool.query<TemplateRow[]>(
+            `SELECT * FROM document_templates WHERE name LIKE ? AND is_active = 1 ORDER BY version DESC LIMIT 1`, 
+            ['%일일업무보고서%']
+        );
+
+        if (templates.length > 0) {
+            const template = templates[0]!;
+            const schema = typeof template.schema_def === 'string' ? JSON.parse(template.schema_def) : template.schema_def;
+            
+            const extractionPrompt = `[목표]: JSON 추출\n[메시지]: "${message}"\n[데이터]: ${fileContext}\n[Schema]: ${JSON.stringify(schema.mappings)}`;
+            const extractResult = await generateWithRetry(extractionPrompt);
+            const extractedData = JSON.parse(extractResult?.response.text().replace(/```json|```/g, '').trim() || "{}");
+
+            // 5. 파일 생성
+            const { downloadUrl } = await generateExcelReport(template, extractedData, user);
+            const aiReply = "업무보고서를 생성했습니다.";
+
+            await pool.query('INSERT INTO chat_history (user_id, user_msg, ai_reply) VALUES (?, ?, ?)', [user.id, message, aiReply]);
+            cleanupFiles(files);
+            return res.json({ reply: aiReply, downloadUrl });
+        }
+
+        // 템플릿 없을 시 기본 응답
+        cleanupFiles(files);
+        res.json({ reply: (await model.generateContent(chatInputs)).response.text() });
+
+    } catch (error) {
+        cleanupFiles(files);
+        console.error("Critical Error:", error);
+        res.status(500).json({ error: "처리 중 오류 발생" });
+    }
 });
+// router.post('/', upload.array('mediaFile', configs.maxCount * 4), async (req, res) => {
+//     try {
+//         const files = req.files as Express.Multer.File[]; 
+//         const { message } = req.body;
+//         const chatInputs = [];
+
+//         // 1. 텍스트 메시지 추가
+//         if (message) {
+//             chatInputs.push(message);
+//         }
+
+//         // 2. 여러 파일 처리 (req.files 사용)
+//         if (files && files.length > 0) {
+//             // forEach 대신 for...of를 사용하여 await이 정상 작동하게 합니다.
+//             for (const file of files) {
+//                 const mimeType = file.mimetype;
+
+//                 // 1. 이미지 또는 PDF 처리
+//                 if (mimeType.startsWith('image/') || mimeType === 'application/pdf') {
+//                     const mediaPart = fileToGenerativePart(file.path, mimeType);
+//                     chatInputs.push(mediaPart);
+//                 } 
+//                 // 2. 엑셀 파일 처리
+//                 else if (mimeType === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+//                     try {
+//                         // await이 순차적으로 기다려줍니다.
+//                         const result = await extractSheetData(file.path);
+                        
+//                         if (result) {
+//                             // 추출된 텍스트 데이터를 AI가 볼 수 있게 문자열로 추가합니다.
+//                             chatInputs.push(`[엑셀 파일(${file.originalname}) 분석 내용]:\n${result}`);
+//                             console.log(`✅ ${file.originalname} 데이터 추출 성공`);
+//                         }
+//                     } catch (err) {
+//                         console.error(`❌ ${file.originalname} 추출 중 오류:`, err);
+//                     }
+//                 }
+//             }
+//         }
+
+//         if (chatInputs.length === 0) {
+//              return res.status(400).json({ reply: "분석할 내용이 없습니다." });
+//         }
+
+//         // 3. Gemini API 호출
+//         const result = await model.generateContent(chatInputs);
+//         const reply = result.response.text();
+
+//         // 파일 삭제는 API 호출 성공 후에 수행
+//         if (files && files.length > 0) {
+//             files.forEach(file => {
+//                 if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+//             });
+//         }
+
+//         // ... 나머지 DB 저장 및 응답 로직
+//         const sql = 'INSERT INTO chat_history (user_msg, ai_reply) VALUES (?, ?)';
+//         const logMsg = message || (req.file ? `[파일: ${req.file.originalname}]` : "데이터 없음");
+//         await pool.query(sql, [logMsg, reply]);
+
+//         res.json({ reply: reply });
+
+//     } catch (error) {
+//         // 에러 발생 시에도 파일이 남아있다면 삭제
+//         if (req.file && fs.existsSync(req.file.path)) fs.unlinkSync(req.file.path);
+//         console.error("비서 서비스 에러:", error);
+//         res.status(500).json({ error: "분석 중 오류 발생" });
+//     }
+// });
 
 // router.post('/', upload.fields([
 //     { name: 'pdfFile', maxCount: 5 },
