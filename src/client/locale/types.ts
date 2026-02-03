@@ -57,4 +57,7 @@ export interface LocaleResource {
     tooltip_lang_select: string;
     tooltip_settings: string;
     btn_settings: string;
+
+    btn_login: string;
+    btn_logout: string;
 }

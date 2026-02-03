@@ -42,4 +42,7 @@ export const en: LocaleResource = {
     tooltip_lang_select: "Select Language",
     tooltip_settings: "Screen Settings",
     btn_settings: "Settings",
+
+    btn_login: "Login",
+    btn_logout: "Logout"
 };

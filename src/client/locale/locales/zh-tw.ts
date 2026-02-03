@@ -41,5 +41,8 @@ export const zh_tw: LocaleResource = {
 
     tooltip_lang_select: "選擇語言",
     tooltip_settings: "螢幕設定",
-    btn_settings: "設定"
+    btn_settings: "設定",
+    
+    btn_login: '登入',
+    btn_logout: '登出'
 };

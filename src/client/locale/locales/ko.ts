@@ -11,15 +11,15 @@ export const ko: LocaleResource = {
     btn_reset: "초기화",
     reset_chat: "대회 초기화",
     alert_reset: "대화 내용과 첨부파일을 모두 지우시겠습니까?",
-    
+
     welcome_msg: "안녕하세요! 작성하고 싶은 보고서의 주제와 상세 내용을 입력해주세요.",
     ai_analyzing: "에 대한 분석 결과입니다.",
-    
+
     placeholder_title: "보고서 주제 또는 제목을 입력하세요...",
     btn_generate: "생성",
     placeholder_detail: "여기에 상세 요구사항이나 추가 설명을 입력하세요 (선택사항)",
     btn_example: "예시값",
-    
+
     icon_finance: "재무",
     icon_accounting: "회계",
     icon_hr: "인사",
@@ -41,5 +41,8 @@ export const ko: LocaleResource = {
 
     tooltip_lang_select: "언어 선택",
     tooltip_settings: "화면 설정",
-    btn_settings: "설정"
+    btn_settings: "설정",
+
+    btn_login: "로그인",
+    btn_logout: "로그아웃"
 };

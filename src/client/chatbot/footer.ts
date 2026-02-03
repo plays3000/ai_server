@@ -106,37 +106,33 @@ export class FooterManager {
 
         // 1. 언어 및 쓰기 모드 자동 적용
         if (this.langSelect) {
-            // (1) 현재 선택된 언어 가져오기
             const selectedLang = this.langSelect.value as LanguageCode;
             
-            // (2) 언어 매니저에 적용
             I18nManager.setLanguage(selectedLang);
             this.updateStatusText(selectedLang);
 
-            // (3) 해당 언어의 정보 가져오기 (여기서 끊겨 있었음)
             const langInfo = locale_infos[selectedLang];
             
             if (langInfo) {
                 const dirNumber = langInfo.lang_direction;
                 
-                // 기본 매핑 가져오기
-                let cssClass = this.DIRECTION_MAP[dirNumber];
+                // [핵심 수정] 딕셔너리에 없는 번호일 경우를 대비해 기본값 할당 (|| 'horizontal-ltr')
+                let cssClass = this.DIRECTION_MAP[dirNumber] || 'horizontal-ltr';
                 
                 // 예외 처리: 6번(CJK)은 웹 기본 가로쓰기로 시작
                 if (dirNumber === 6) {
                      cssClass = 'horizontal-ltr'; 
                 }
 
-                // Body 클래스 초기화 및 적용
                 document.body.className = '';
+                // 이제 cssClass는 무조건 string이므로 에러가 나지 않습니다.
                 document.body.classList.add(cssClass);
                 
-                // 설정창 UI 동기화
                 if (writingModeSelect) writingModeSelect.value = cssClass;
             }
         }
 
-        // 2. 수동 쓰기 모드 오버라이드 (사용자가 굳이 다른 걸 선택했을 때)
+        // 2. 수동 쓰기 모드 오버라이드
         if (writingModeSelect) {
              const manualMode = writingModeSelect.value;
              if (!document.body.classList.contains(manualMode)) {
@@ -146,29 +142,32 @@ export class FooterManager {
         }
 
         // 3. 테마 적용
-        const theme = themeSelect.value;
-        if (theme === 'dark') {
-            root.style.setProperty('--bg-color', '#222222');
-            root.style.setProperty('--white', '#333333');
-            root.style.setProperty('--text-color', '#ffffff');
-            root.style.setProperty('--gray-light', '#444444');
-            root.style.setProperty('--gray-text', '#cccccc');
-            root.style.setProperty('--input-bg-color', '#333333');
-            root.style.setProperty('--bubble-ai-bg-color', '#333333');
-            root.style.setProperty('--bubble-ai-text-color', '#ffffff');
-            root.style.setProperty('--footer-text-color', '#cccccc');
-            root.style.setProperty('--file-list-bg-color', '#444444');
-        } else {
-            root.style.setProperty('--bg-color', '#f4f6f8');
-            root.style.setProperty('--white', '#ffffff');
-            root.style.setProperty('--text-color', '#333');
-            root.style.setProperty('--gray-light', '#e0e0e0');
-            root.style.setProperty('--gray-text', '#888');
-            root.style.setProperty('--input-bg-color', '#ffffff');
-            root.style.setProperty('--bubble-ai-bg-color', '#ffffff');
-            root.style.setProperty('--bubble-ai-text-color', '#333');
-            root.style.setProperty('--footer-text-color', '#888');
-            root.style.setProperty('--file-list-bg-color', '#ffffff');
+        // (null 체크를 위해 themeSelect가 있는지 확인하는 것이 안전합니다)
+        if (themeSelect) {
+            const theme = themeSelect.value;
+            if (theme === 'dark') {
+                root.style.setProperty('--bg-color', '#222222');
+                root.style.setProperty('--white', '#333333');
+                root.style.setProperty('--text-color', '#ffffff');
+                root.style.setProperty('--gray-light', '#444444');
+                root.style.setProperty('--gray-text', '#cccccc');
+                root.style.setProperty('--input-bg-color', '#333333');
+                root.style.setProperty('--bubble-ai-bg-color', '#333333');
+                root.style.setProperty('--bubble-ai-text-color', '#ffffff');
+                root.style.setProperty('--footer-text-color', '#cccccc');
+                root.style.setProperty('--file-list-bg-color', '#444444');
+            } else {
+                root.style.setProperty('--bg-color', '#f4f6f8');
+                root.style.setProperty('--white', '#ffffff');
+                root.style.setProperty('--text-color', '#333');
+                root.style.setProperty('--gray-light', '#e0e0e0');
+                root.style.setProperty('--gray-text', '#888');
+                root.style.setProperty('--input-bg-color', '#ffffff');
+                root.style.setProperty('--bubble-ai-bg-color', '#ffffff');
+                root.style.setProperty('--bubble-ai-text-color', '#333');
+                root.style.setProperty('--footer-text-color', '#888');
+                root.style.setProperty('--file-list-bg-color', '#ffffff');
+            }
         }
     }
 }
