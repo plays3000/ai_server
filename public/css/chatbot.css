@@ -2,18 +2,33 @@
    1. 기본 변수 및 초기화 (Base & Variables)
    ========================================================================== */
 :root {
+    /* [기본: 라이트 모드] */
     --primary-color: #007bff;
     --bg-color: #f4f6f8;
     --white: #ffffff;
     --text-color: #333;
     --gray-light: #e0e0e0;
     --gray-dark: #444;
-    --gray-text: #888; /* 기본 회색 텍스트 색상 */
-    --input-bg-color: var(--white);
-    --bubble-ai-bg-color: var(--white);
-    --bubble-ai-text-color: var(--text-color);
-    --footer-text-color: var(--gray-text);
-    --file-list-bg-color: var(--white);
+    --gray-text: #666;
+    --input-bg-color: #ffffff;
+    --bubble-ai-bg-color: #ffffff;
+    --bubble-ai-text-color: #333;
+    --footer-text-color: #888;
+    --file-list-bg-color: #ffffff;
+}
+
+/* [추가] 다크 모드 변수 재정의 (JS가 아닌 CSS에서 처리해야 빠름) */
+body.dark {
+    --bg-color: #222222;
+    --white: #333333;
+    --text-color: #ffffff;
+    --gray-light: #444444;
+    --gray-text: #cccccc;
+    --input-bg-color: #333333;
+    --bubble-ai-bg-color: #333333;
+    --bubble-ai-text-color: #ffffff;
+    --footer-text-color: #cccccc;
+    --file-list-bg-color: #444444;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -26,34 +41,65 @@ body {
     flex-direction: column;
     color: var(--text-color);
     transition: background 0.3s;
+    overflow: hidden; /* 전체 스크롤 방지 */
 }
 
-/* 채팅 출력 영역 (기본값) */
+/* ==========================================================================
+   2. 메인 레이아웃 (Chat Area)
+   ========================================================================== */
+.main-layout-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+#main-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column; /* 기본: 위에서 아래로 쌓임 */
+    overflow: hidden;
+    position: relative;
+}
+
+/* 헤더 (채팅창 내부 헤더) */
+.chat-area-header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: var(--bg-color);
+    border-bottom: 1px solid var(--gray-light);
+    z-index: 10;
+}
+
+/* 채팅 출력 영역 */
 .output-result-stack {
     flex-grow: 1;
     padding: 20px;
-    overflow-y: auto;
+    overflow-y: auto; /* 기본: 세로 스크롤 */
     display: flex;
-    flex-direction: column-reverse; 
+    flex-direction: column;
     gap: 15px;
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
+    scroll-behavior: smooth;
 }
 
-/* 말풍선 스타일 */
+/* 말풍선 공통 */
 .message-row { display: flex; width: 100%; margin-bottom: 5px; }
 .message-row.user { justify-content: flex-end; }
 .message-row.ai { justify-content: flex-start; }
 
 .bubble {
     max-width: 80%;
-    padding: 15px;
+    padding: 12px 16px;
     border-radius: 12px;
     font-size: 0.95rem;
     line-height: 1.5;
     position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    word-wrap: break-word;
 }
 
 .bubble.user-bubble {
@@ -61,11 +107,6 @@ body {
     color: white;
     border-bottom-right-radius: 2px;
 }
-.bubble.user-bubble strong {
-    display: block; margin-bottom: 5px; font-size: 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 5px;
-}
-
 .bubble.ai-bubble {
     background-color: var(--bubble-ai-bg-color);
     color: var(--bubble-ai-text-color);
@@ -73,68 +114,236 @@ body {
     border-bottom-left-radius: 2px;
 }
 
-/* 로딩 애니메이션 */
-.loading-dots span {
-    display: inline-block; width: 8px; height: 8px;
-    background-color: #888; border-radius: 50%; margin: 0 2px;
-    animation: bounce 1.4s infinite ease-in-out both;
+/* ==========================================================================
+   3. 하단 입력 패널 (Input Area)
+   ========================================================================== */
+.input-container-wrapper {
+    background-color: var(--input-bg-color);
+    border-top: 1px solid var(--gray-light);
+    padding: 15px 20px;
+    flex-shrink: 0;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.03);
+    z-index: 20;
 }
-.loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-.loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-/* [추가] 말풍선 내부 첨부파일 영역 */
-.msg-attachment-area {
-    margin-top: 10px;
+
+.input-box {
+    max-width: 800px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
+    position: relative;
 }
 
-/* 이미지/비디오 그리드 (2개 이상일 때 예쁘게 정렬) */
-.msg-media-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-}
+/* 텍스트 입력 영역 */
+.main-input-group { display: flex; gap: 10px; }
+.detail-description { display: flex; gap: 10px; }
 
-.msg-media-item {
-    max-width: 100%;
+input[type="text"], textarea {
+    flex-grow: 1;
+    padding: 10px 14px;
+    border: 1px solid var(--gray-light);
     border-radius: 8px;
-    border: 1px solid rgba(0,0,0,0.1);
-    object-fit: cover;
+    font-size: 1rem;
+    outline: none;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: border 0.2s;
+    font-family: inherit;
 }
-/* 이미지가 여러 개면 크기 조절 (선택사항) */
-.msg-media-grid > img, 
-.msg-media-grid > video {
-    max-width: 200px; 
-    max-height: 200px;
-}
+input[type="text"]:focus, textarea:focus { border-color: var(--primary-color); background-color: var(--white); }
 
-/* 일반 파일 목록 스타일 */
-.msg-file-list {
+/* 버튼 스타일 */
+.generate-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0 20px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.example-btn {
+    width: 60px;
+    background-color: #f1f3f5;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.8rem;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-}
-
-.msg-file-item {
-    display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 8px;
-    background: rgba(0,0,0,0.05); /* 연한 배경 */
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    color: inherit; /* 부모 글자색 상속 */
+    gap: 4px;
+    color: #495057;
 }
 
-.msg-file-item i {
-    font-size: 1.1rem;
-    opacity: 0.7;
+/* 툴바 */
+.toolbar { display: flex; justify-content: space-between; align-items: center; margin-top: 5px; }
+.icon-group { display: flex; gap: 15px; }
+.icon-btn { cursor: pointer; color: var(--gray-text); display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; gap: 3px; }
+.icon-btn i { font-size: 1.2rem; }
+.icon-btn:hover { color: var(--primary-color); }
+
+
+/* ==========================================================================
+   4. 쓰기 모드 (Writing Modes) - 여기가 핵심 수정 사항입니다
+   ========================================================================== */
+
+/* ---------------------------------------------------
+   가로쓰기 (Horizontal) - 표준 채팅 UI
+   --------------------------------------------------- */
+/* (A) LTR (기본: 한국어, 영어 등) */
+.horizontal-ltr .output-result-stack {
+    flex-direction: column-reverse; /* 최신 메시지가 시각적으로 하단에 위치 (JS가 afterbegin일 경우) */
+    align-items: stretch; /* 자식 요소 너비 자동 조절 */
+    writing-mode: horizontal-tb; /* 가로 쓰기 고정 */
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
-/* 다크모드/사용자 말풍선에서의 파일 가독성 확보 */
-.user-bubble .msg-file-item {
-    background: rgba(255,255,255,0.2);
-    color: white;
+/* 메시지 행 (가로용) */
+.horizontal-ltr .message-row {
+    display: flex;
+    width: 100%;
+    margin-bottom: 15px;
+    flex-direction: row; /* 좌우 배치 */
+}
+
+/* 정렬: 사용자는 오른쪽, AI는 왼쪽 */
+.horizontal-ltr .message-row.user {
+    justify-content: flex-end; /* 오른쪽 정렬 */
+}
+.horizontal-ltr .message-row.ai {
+    justify-content: flex-start; /* 왼쪽 정렬 */
+}
+
+/* 말풍선 텍스트 방향 */
+.horizontal-ltr input[type="text"], 
+.horizontal-ltr textarea,
+.horizontal-ltr .bubble {
+    text-align: left; 
+    direction: ltr;
+}
+
+/* (B) RTL (아랍어, 히브리어 등) - 반대 정렬 */
+.horizontal-rtl .output-result-stack {
+    flex-direction: column-reverse;
+    writing-mode: horizontal-tb;
+}
+.horizontal-rtl .message-row.user {
+    justify-content: flex-start; /* RTL에서는 '나'의 시작점이 왼쪽일 수 있음 (문화권에 따라 다름, 보통은 그대로 둠) */
+}
+/* RTL에서 입력창 텍스트 방향 */
+.horizontal-rtl input[type="text"], 
+.horizontal-rtl textarea { 
+    text-align: right; 
+    direction: rtl; 
+}
+
+/* ---------------------------------------------------
+   (A) 세로쓰기 공통 (CJK, 몽골, 마야)
+   --------------------------------------------------- */
+.vertical-rl, .vertical-lr-mongolian, .vertical-lr-maya {
+    /* 스크롤바가 가로로 생겨야 함 */
+    overflow-x: auto; 
+    overflow-y: hidden;
+}
+
+/* 메인 컨테이너 방향 전환 */
+.vertical-rl .main-layout-container,
+.vertical-lr-mongolian .main-layout-container,
+.vertical-lr-maya .main-layout-container {
+    flex-direction: row; /* 가로 배치 */
+}
+
+/* 채팅 영역 스크롤 방향 변경 */
+.vertical-rl .output-result-stack,
+.vertical-lr-mongolian .output-result-stack,
+.vertical-lr-maya .output-result-stack {
+    flex-direction: row; /* 메시지가 가로로 쌓임 */
+    overflow-x: auto;
+    overflow-y: hidden;
+    height: 100%;
+    width: 100%;
+    align-items: flex-start; /* 상단 정렬 */
+    padding-bottom: 20px; /* 스크롤바 공간 */
+}
+
+/* 입력 패널 위치 변경 (오른쪽 or 왼쪽) */
+.vertical-rl .input-container-wrapper,
+.vertical-lr-mongolian .input-container-wrapper,
+.vertical-lr-maya .input-container-wrapper {
+    width: 320px; /* 너비 고정 */
+    height: 100%;
+    border-top: none;
+    overflow-y: auto;
+}
+
+/* 입력창 내부 요소 세로 배치 */
+.vertical-rl .main-input-group,
+.vertical-rl .detail-description,
+.vertical-lr-mongolian .main-input-group,
+.vertical-lr-mongolian .detail-description,
+.vertical-lr-maya .main-input-group,
+.vertical-lr-maya .detail-description {
+    flex-direction: column; /* 버튼이 입력창 아래로 */
+    align-items: stretch;
+}
+
+/* 입력창 자체의 쓰기 방향 적용 */
+.vertical-rl input, .vertical-rl textarea {
+    writing-mode: vertical-rl;
+    height: 150px; /* 세로 입력이므로 높이 확보 */
+}
+.vertical-lr-mongolian input, .vertical-lr-mongolian textarea {
+    writing-mode: vertical-lr;
+    height: 150px;
+}
+
+/* ---------------------------------------------------
+   (B) 세로쓰기 개별 설정
+   --------------------------------------------------- */
+
+/* 1. 우 -> 좌 (Vertical-RL): 한국/중국/일본 */
+.vertical-rl .input-container-wrapper {
+    order: 2; /* 입력창을 오른쪽에 배치 (전통적 방식) */
+    border-left: 1px solid var(--gray-light);
+}
+.vertical-rl .output-result-stack {
+    direction: rtl; /* 스크롤 시작점이 오른쪽 */
+    order: 1;
+}
+.vertical-rl .message-row {
+    writing-mode: vertical-rl;
+    width: auto; height: auto;
+    margin-left: 10px; margin-bottom: 0;
+}
+
+
+/* 2. 좌 -> 우 (Vertical-LR): 몽골/만주 */
+.vertical-lr-mongolian .input-container-wrapper {
+    order: 1; /* 입력창을 왼쪽에 배치 */
+    border-right: 1px solid var(--gray-light);
+}
+.vertical-lr-mongolian .output-result-stack {
+    direction: ltr; /* 스크롤 시작점이 왼쪽 */
+    order: 2;
+}
+.vertical-lr-mongolian .message-row {
+    writing-mode: vertical-lr;
+    width: auto; height: auto;
+    margin-right: 10px; margin-bottom: 0;
+}
+
+
+/* ==========================================================================
+   5. 기타 유틸리티
+   ========================================================================== */
+.file-remove-btn {
+    position: absolute; top: -5px; right: -5px; width: 18px; height: 18px;
+    background: #ff4757; color: white; border-radius: 50%;
+    display: flex; justify-content: center; align-items: center;
+    cursor: pointer; font-size: 12px; font-weight: bold;
 }

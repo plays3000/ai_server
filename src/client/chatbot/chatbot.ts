@@ -2,6 +2,7 @@ import { HeaderManager } from './header.js';
 import { FooterManager } from './footer.js';
 import { FileStore } from './types.js';
 import { VoiceRecorder } from './voicerecorder.js';
+import { I18nManager } from '../../client/locale/i18n.js';
 
 class ChatbotApp {
     private chatContainer: HTMLElement;
@@ -14,11 +15,14 @@ class ChatbotApp {
     private fileListArea: HTMLElement;
     private voiceRecorder: VoiceRecorder;
     
+    private mainContent: HTMLElement;
+
     constructor() {
         this.chatContainer = document.getElementById('chatContainer')!;
         this.titleInput = document.getElementById('reportTitle') as HTMLInputElement;
         this.detailInput = document.getElementById('reportDetail') as HTMLTextAreaElement;
         this.fileListArea = document.getElementById('fileListArea')!;
+        this.mainContent = document.getElementById('main-content')!;
 
         // 음성 녹음 완료 시 오디오 배열에 추가
         this.voiceRecorder = new VoiceRecorder((audioFile) => {
@@ -40,6 +44,34 @@ class ChatbotApp {
 
         this.setupInputEvents();
         this.setupFileEvents();
+        this.setupNavigationEvents();
+
+        // [New] Chat clear button with confirmation
+        document.getElementById('chatClearBtn')?.addEventListener('click', () => {
+            if (confirm(I18nManager.getText('alert_reset'))) {
+                this.resetChat();
+            }
+        });
+    }
+
+    private setupNavigationEvents(): void {
+        document.getElementById('nav-chat')?.addEventListener('click', () => this.loadContent('/content/chat'));
+        document.getElementById('nav-login')?.addEventListener('click', () => this.loadContent('/content/login'));
+        document.getElementById('nav-signup')?.addEventListener('click', () => this.loadContent('/content/signup'));
+    }
+
+    private async loadContent(url: string): Promise<void> {
+        try {
+            const response = await fetch(url);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const html = await response.text();
+            this.mainContent.innerHTML = html;
+        } catch (error) {
+            console.error('Failed to load content:', error);
+            this.mainContent.innerHTML = '<p>Error loading content. Please try again.</p>';
+        }
     }
 
     // --- 채팅 로직 ---
@@ -93,6 +125,26 @@ class ChatbotApp {
             loadingEl?.remove();
             this.appendMessage('ai', `<strong>${title}</strong>에 대한 분석 결과입니다.`);
         }, 2000);
+    }
+
+    // [New] 스크롤 처리 함수
+    private scrollToBottom(): void {
+        const container = this.chatContainer;
+        const mode = Array.from(document.body.classList).find(c => c.startsWith('vertical-'));
+        
+        if (mode === 'vertical-rl') {
+            // 세로쓰기(우->좌): 스크롤을 왼쪽 끝(0) 또는 오른쪽 끝으로 보내야 함
+            // 브라우저마다 RTL 스크롤 동작이 다르므로 주의 (보통 scrollLeft = 0 이 가장 최근)
+            container.scrollLeft = 0; 
+        } else if (mode === 'vertical-lr-mongolian' || mode === 'vertical-lr-maya') {
+             // 세로쓰기(좌->우): 스크롤을 오른쪽 끝으로
+             container.scrollLeft = container.scrollWidth;
+        } else {
+            // 가로쓰기: 스크롤을 맨 아래로
+            // flex-direction: column-reverse를 쓰고 있다면 scrollTop = 0이 맨 아래일 수 있음
+            // 현재 CSS에서 column-reverse를 쓰고 있으므로:
+            container.scrollTop = container.scrollHeight; 
+        }
     }
 
     // files 인자 추가 (FileStore 타입)
@@ -158,6 +210,9 @@ class ChatbotApp {
             </div>`;
             
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
+        
+        // [New] 메시지 추가 후 스크롤 조정
+        requestAnimationFrame(() => this.scrollToBottom());
     
     }
 

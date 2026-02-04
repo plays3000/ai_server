@@ -2,11 +2,12 @@
    2. 레이아웃: 헤더 & 채팅 영역 (Header & Chat Area)
    ========================================================================== */
 header {
-    text-align: center;
-    padding: 20px;
+    display: flex; /* Flexbox 활성화 */
+    justify-content: space-between; /* 양쪽 끝 정렬 */
+    align-items: center; /* 세로 중앙 정렬 */
+    padding: 15px 20px; /* 패딩 조정 */
     background-color: var(--bg-color);
     flex-shrink: 0;
-    position: relative;
     border-bottom: 1px solid var(--gray-light); /* 헤더 구분선 추가 */
 }
 
@@ -16,12 +17,8 @@ header h1 {
     margin: 0;
 }
 
-/* 버튼 그룹 컨테이너 (오른쪽 상단 고정) */
+/* 버튼 그룹 컨테이너 */
 .header-actions {
-    position: absolute;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
     display: flex;
     gap: 10px; /* 버튼 사이 간격 */
 }
@@ -30,6 +27,7 @@ header h1 {
 .action-btn {
     background: transparent;
     padding: 8px 12px;
+    border: 1px solid #ccc; /* 기본 테두리 추가 */
     border-radius: 6px;
     cursor: pointer;
     font-size: 0.9rem;
@@ -40,7 +38,63 @@ header h1 {
     transition: all 0.2s ease;
 }
 
-/* 초기화 버튼 (붉은색 - Danger) */
+/* 개별 버튼 스타일 */
+.nav-chat-btn {
+    border-color: #007bff;
+    color: #007bff;
+}
+.nav-chat-btn:hover {
+    background-color: #007bff;
+    color: white;
+}
+
+.nav-login-btn {
+    border-color: #28a745;
+    color: #28a745;
+}
+.nav-login-btn:hover {
+    background-color: #28a745;
+    color: white;
+}
+
+.nav-signup-btn {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+.nav-signup-btn:hover {
+    background-color: #6c757d;
+    color: white;
+}
+
+/* --- 다크모드 대응 --- */
+body.dark .nav-chat-btn {
+    border-color: #58abff; /* 밝은 파란색 */
+    color: #58abff;
+}
+body.dark .nav-chat-btn:hover {
+    background-color: #58abff;
+    color: #111; /* 어두운 텍스트 */
+}
+
+body.dark .nav-login-btn {
+    border-color: #7ee299; /* 밝은 초록색 */
+    color: #7ee299;
+}
+body.dark .nav-login-btn:hover {
+    background-color: #7ee299;
+    color: #111;
+}
+
+body.dark .nav-signup-btn {
+    border-color: #a9b1b8; /* 밝은 회색 */
+    color: #a9b1b8;
+}
+body.dark .nav-signup-btn:hover {
+    background-color: #a9b1b8;
+    color: #111;
+}
+
+/* 기존 버튼 스타일 유지 (필요 시) */
 .reset-btn {
     border: 1px solid #ff6b6b;
     color: #ff6b6b;
@@ -50,24 +104,14 @@ header h1 {
     color: white;
 }
 
-/* 로그인 버튼 (파란색/검정색 - Primary) */
-.login-btn {
-    border: 1px solid #333; /* 다크모드 대응을 위해 변수 사용 권장 */
-    color: #333;
-}
-/* 다크모드 대응 (CSS 변수가 있다면) */
-body.dark .login-btn {
-    border-color: #fff;
-    color: #fff;
+body.dark .reset-btn {
+    border-color: #ff8c8c;
+    color: #ff8c8c;
 }
 
-.login-btn:hover {
-    background-color: #333;
-    color: white;
-}
-body.dark .login-btn:hover {
-    background-color: #fff;
-    color: #333;
+body.dark .reset-btn:hover {
+    background-color: #ff8c8c;
+    color: #111;
 }
 
 /* 모바일 대응: 화면 좁을 때 텍스트 숨기고 아이콘만 */

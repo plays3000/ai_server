@@ -60,4 +60,44 @@ export interface LocaleResource {
 
     btn_login: string;
     btn_logout: string;
+    // btn_signup: string;
+
+    // // 사용자정보
+    // user_idx: string; //UUUID고유값
+    // user_id: string; // (String) 사용자ID
+    // user_password: string;
+    // user_name: string;
+    // user_phone: string;
+    // user_email: string;
+
+    // // 그룹
+    // group_name: string; //그룹이름
+    // group_company_reg_num: string; //사업자등록번호
+
+    // // 기업
+    // company_name: string; //회사이름
+    // company_belonging_group_code: string; // 소속그룹코ㅡ
+
+    // // 로그인
+    // placeholder_input_id: string;
+    // lbl_find_id: string;
+    // placeholder_input_pw: string;
+    // lbl_find_pw: string;
+    // lbl_login_with_social_account: string;
+
+    // //회원가입
+    // lbl_default_info: string;
+    // lbl_confirm_id: string;
+    // placeholder_reenter_id: string;
+    // lbl_confirm_pw: string;
+    // placeholder_reenter_pw: string;
+    // placeholder_enter_personal_name: string;
+    // placeholder_enter_phone_number: string;
+    // lbl_select_signup_type: string;
+    // title_signup_as_group_manager: string;
+    // desc_signup_as_group_manager: string; // 여러 회사를 관리하는<br>그룹 관리자
+    // title_signup_as_company: string;
+    // desc_signup_as_company: string; // 독립된 회사 또는<br>그룹 산하 법인
+    // title_signup_as_employee: string;
+    // desc_signup_as_employee: string; // 초대 코드를 통해<br>회사에 소속
 }

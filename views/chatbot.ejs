@@ -6,26 +6,52 @@
     <title>AI기반보고서생성기</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="report-generator-chatbot/chatbot.css">
-    <link rel="stylesheet" href="report-generator-chatbot/responsive.css">
-    <link rel="stylesheet" href="report-generator-chatbot/footer.css">
-    <link rel="stylesheet" href="report-generator-chatbot/header.css">
-    <link rel="stylesheet" href="report-generator-chatbot/inputbox.css">
-    <link rel="stylesheet" href="report-generator-chatbot/login-signup.css">
-    <link rel="stylesheet" href="report-generator-chatbot/orientation.css">
-    <link rel="stylesheet" href="report-generator-chatbot/settings.css">
-    <link rel="stylesheet" href="report-generator-chatbot/voicerecorder.css">
+    <link rel="stylesheet" href="css/chatbot.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/inputbox.css">
+    <link rel="stylesheet" href="css/login-signup.css">
+    <link rel="stylesheet" href="css/orientation.css">
+    <link rel="stylesheet" href="css/settings.css">
+    <link rel="stylesheet" href="css/voicerecorder.css">
 </head>
 <body>
+    <script>
+        (function() {
+            try {
+                // 1. 테마 복구
+                const savedTheme = localStorage.getItem('app_theme');
+                if (savedTheme === 'dark') {
+                    document.body.classList.add('dark');
+                }
+
+                // 2. 쓰기 모드 복구
+                const savedMode = localStorage.getItem('app_writing_mode');
+                if (savedMode) {
+                    document.body.classList.add(savedMode);
+                } else {
+                    document.body.classList.add('horizontal-ltr'); // 기본값
+                }
+            } catch (e) {
+                console.error('설정 복구 중 오류:', e);
+            }
+        })();
+    </script>
 
     <%- include('components/header') %>
 
-    <%- include('components/chat-area') %>
+    <main class="main-layout-container">
+        <div id="main-content">
+            <%- include('components/chat-area') %>
+        </div>
+        <%- include('components/inputbox') %>
+    </main>
 
-    <%- include('components/inputbox') %>
+    <!-- <%- include('components/footer') %> -->
 
     <%- include('setups/settings') %>
 
-    <script type="module" src="report-generator-chatbot/chatbot.js"></script>
+    <script type="module" src="js/chatbot.bundle.js"></script>
 </body>
 </html>

@@ -60,6 +60,27 @@ app.get('/', (req: Request, res: Response) => {
     res.render('chatbot');
 });
 
+// Dynamic content routes
+app.get('/content/chat', (req: Request, res: Response) => {
+    res.render('components/chat-area');
+});
+
+app.get('/content/login', (req: Request, res: Response) => {
+    res.render('screens/login');
+});
+
+app.get('/content/signup', (req: Request, res: Response) => {
+    res.render('screens/signup');
+});
+
+app.get('/login', (req: Request, res: Response) => {
+    res.render('screens/login');
+});
+
+app.get('/signup', (req: Request, res: Response) => {
+    res.render('screens/signup');
+});
+
 // 2. 전역 에러 핸들러 (NextFunction 사용)
 // 모든 라우터에서 발생하는 예상치 못한 에러를 여기서 포착합니다.
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
