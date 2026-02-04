@@ -60,44 +60,84 @@ export interface LocaleResource {
 
     btn_login: string;
     btn_logout: string;
-    // btn_signup: string;
+    btn_signup: string;
+    btn_train_template: string; // 양식학습
+    nav_login: string;
+    nav_logout: string;
+    nav_signup: string;
+    nav_train_template: string; // 
 
-    // // 사용자정보
-    // user_idx: string; //UUUID고유값
-    // user_id: string; // (String) 사용자ID
-    // user_password: string;
-    // user_name: string;
-    // user_phone: string;
-    // user_email: string;
+    // 사용자정보
+    user_idx: string; // UUID고유값
+    user_id: string; // (String) 사용자ID
+    user_password: string;
+    user_name: string;
+    user_phone: string;
+    user_email: string;
 
-    // // 그룹
-    // group_name: string; //그룹이름
-    // group_company_reg_num: string; //사업자등록번호
+    // 그룹
+    group_name: string; //그룹이름
+    group_company_reg_num: string; //사업자등록번호
 
-    // // 기업
-    // company_name: string; //회사이름
-    // company_belonging_group_code: string; // 소속그룹코ㅡ
+    // 기업
+    company_name: string; //회사이름
+    company_belonging_group_code: string; // 소속그룹코ㅡ
 
-    // // 로그인
-    // placeholder_input_id: string;
-    // lbl_find_id: string;
-    // placeholder_input_pw: string;
-    // lbl_find_pw: string;
-    // lbl_login_with_social_account: string;
+    // [신규] 로그인 페이지
+    title_login: string;            // 로그인
+    lbl_id: string;                 // 아이디
+    placeholder_id: string;         // 아이디 입력
+    lbl_password: string;           // 비밀번호
+    placeholder_password: string;   // 비밀번호 입력
+    link_find_id: string;           // 아이디 찾기
+    link_find_pw: string;           // 비밀번호 찾기
+    btn_login_action: string;       // (동사) 로그인
+    btn_go_signup: string;          // 회원가입 (이동 버튼)
+    lbl_social_login: string;       // 소셜 계정으로 로그인
 
-    // //회원가입
-    // lbl_default_info: string;
-    // lbl_confirm_id: string;
-    // placeholder_reenter_id: string;
-    // lbl_confirm_pw: string;
-    // placeholder_reenter_pw: string;
-    // placeholder_enter_personal_name: string;
-    // placeholder_enter_phone_number: string;
-    // lbl_select_signup_type: string;
-    // title_signup_as_group_manager: string;
-    // desc_signup_as_group_manager: string; // 여러 회사를 관리하는<br>그룹 관리자
-    // title_signup_as_company: string;
-    // desc_signup_as_company: string; // 독립된 회사 또는<br>그룹 산하 법인
-    // title_signup_as_employee: string;
-    // desc_signup_as_employee: string; // 초대 코드를 통해<br>회사에 소속
+    // [신규] 회원가입 페이지 - 공통
+    title_signup: string;           // 회원가입
+    lbl_basic_info: string;         // 기본 정보
+    lbl_confirm_id: string;         // 아이디 확인
+    placeholder_confirm_id: string; // 아이디 재입력
+    lbl_confirm_pw: string;         // 비밀번호 확인
+    placeholder_confirm_pw: string; // 비밀번호 재입력
+    lbl_name: string;               // 이름
+    placeholder_name: string;       // 실명 입력
+    lbl_phone: string;              // 전화번호
+    placeholder_phone: string;      // 010-0000-0000
+    lbl_email: string;              // 이메일
+    placeholder_email: string;      // example@email.com
+    lbl_select_role: string;        // 가입 유형 선택
+
+    // [신규] 가입 유형 카드
+    role_group_title: string;       // 그룹 창설
+    role_group_desc: string;        // 여러 회사를 관리하는...
+    role_company_title: string;     // 법인 창설
+    role_company_desc: string;      // 독립된 회사 또는...
+    role_employee_title: string;    // 일반 직원
+    role_employee_desc: string;     // 초대 코드를 통해...
+
+    // [신규] 입력 필드 (그룹/법인/직원)
+    lbl_group_name: string;
+    placeholder_group_name: string;
+    lbl_business_num: string;
+    placeholder_business_num: string;
+    
+    lbl_company_name: string;
+    placeholder_company_name: string;
+    lbl_parent_group_code: string;
+    placeholder_parent_group_code: string;
+    lbl_rep_position: string;
+    placeholder_rep_position: string;
+
+    lbl_invite_code: string;
+    placeholder_invite_code: string;
+    lbl_department: string;
+    placeholder_department: string;
+    lbl_position: string;
+    placeholder_position: string;
+
+    btn_complete_signup: string;    // 회원가입 완료
+    btn_back: string;               // 뒤로가기
 }

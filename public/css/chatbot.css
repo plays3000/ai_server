@@ -44,6 +44,30 @@ body {
     overflow: hidden; /* 전체 스크롤 방지 */
 }
 
+/* 세로쓰기 모드 공통: 전체 레이아웃을 좌우 배치로 변경 */
+body.vertical-rl, 
+body.vertical-lr-mongolian, 
+body.vertical-lr-maya {
+    flex-direction: row; /* 위아래(Column) -> 좌우(Row) 배치 */
+    overflow-x: auto;    /* 가로 스크롤 허용 */
+    overflow-y: hidden;  /* 세로 스크롤 숨김 */
+}
+
+/* (A) 우->좌 (한국/한자): [상태바] [본문] [헤더] 순서 */
+body.vertical-rl header { order: 3; border-left: 1px solid var(--gray-light); border-bottom: none; }
+body.vertical-rl .main-layout-container { order: 2; }
+body.vertical-rl .status-bar { order: 1; border-right: 1px solid var(--gray-light); border-top: none; }
+
+/* (B) 좌->우 (몽골): [헤더] [본문] [상태바] 순서 */
+body.vertical-lr-mongolian header { order: 1; border-right: 1px solid var(--gray-light); border-bottom: none; }
+body.vertical-lr-mongolian .main-layout-container { order: 2; }
+body.vertical-lr-mongolian .status-bar { order: 3; border-left: 1px solid var(--gray-light); border-top: none; }
+
+/* (C) 좌->우 (마야): 몽골어와 동일하게 배치 */
+body.vertical-lr-maya header { order: 1; border-right: 1px solid var(--gray-light); border-bottom: none; }
+body.vertical-lr-maya .main-layout-container { order: 2; }
+body.vertical-lr-maya .status-bar { order: 3; border-left: 1px solid var(--gray-light); border-top: none; }
+
 /* ==========================================================================
    2. 메인 레이아웃 (Chat Area)
    ========================================================================== */
@@ -335,6 +359,51 @@ input[type="text"]:focus, textarea:focus { border-color: var(--primary-color); b
     writing-mode: vertical-lr;
     width: auto; height: auto;
     margin-right: 10px; margin-bottom: 0;
+}
+
+/* ==========================================================================
+   [추가] 세로쓰기 모드 디테일 보정 (입력창 & 버튼)
+   ========================================================================== */
+
+/* 1. 입력창 글자 위쪽 정렬 강제 (글자가 아래로 쳐지는 현상 수정) */
+.vertical-rl input, .vertical-rl textarea,
+.vertical-lr-mongolian input, .vertical-lr-mongolian textarea,
+.vertical-lr-maya input, .vertical-lr-maya textarea {
+    text-align: left !important;  /* 세로모드에서 left는 '위쪽'을 의미합니다 */
+    vertical-align: top;
+    resize: none; /* 크기 조절 끄기 (레이아웃 깨짐 방지) */
+}
+
+/* 2. 전송(생성), 예시값 버튼 세로쓰기 변환 */
+.vertical-rl .generate-btn, .vertical-rl .example-btn,
+.vertical-lr-mongolian .generate-btn, .vertical-lr-mongolian .example-btn,
+.vertical-lr-maya .generate-btn, .vertical-lr-maya .example-btn {
+    writing-mode: vertical-rl;    /* 버튼 내부도 세로쓰기 */
+    text-orientation: upright;    /* 글자를 옆으로 눕히지 않고 똑바로 세움 */
+    flex-direction: column;       /* 아이콘과 글자 배치 방향 전환 */
+    width: 50px;                  /* 너비는 좁게 */
+    height: auto;                 /* 높이는 내용에 맞게 */
+    padding: 15px 5px;            /* 패딩 조정 */
+    white-space: nowrap;          /* 줄바꿈 방지 */
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 3. 아이콘 회전 보정 (종이비행기 등) */
+/* 세로 모드에서 아이콘이 어색하다면 회전시킵니다 */
+.vertical-rl .generate-btn i,
+.vertical-lr-mongolian .generate-btn i,
+.vertical-lr-maya .generate-btn i {
+    transform: rotate(90deg); /* 아이콘을 90도 돌려서 진행 방향과 맞춤 */
+}
+
+/* 4. 버튼 그룹 레이아웃 정돈 */
+.vertical-rl .main-input-group,
+.vertical-lr-mongolian .main-input-group,
+.vertical-lr-maya .main-input-group {
+    align-items: center; /* 버튼들이 중앙에 오도록 */
+    gap: 10px;
 }
 
 

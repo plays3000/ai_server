@@ -27,3 +27,40 @@
 .status-btn:hover {
     color: var(--primary-color);
 }
+
+/* === 세로쓰기 모드일 때 상태바 스타일 오버라이드 === */
+.vertical-rl .status-bar, 
+.vertical-lr-mongolian .status-bar, 
+.vertical-lr-maya .status-bar {
+    width: 50px;       /* 너비 고정 */
+    height: 100vh;     /* 높이 100% */
+    flex-direction: column; /* 내부 요소 세로 정렬 */
+    padding: 20px 5px;
+    justify-content: space-between;
+}
+
+/* 왼쪽/오른쪽 그룹을 위/아래 그룹으로 변경 */
+.vertical-rl .status-left, .vertical-rl .status-right,
+.vertical-lr-mongolian .status-left, .vertical-lr-mongolian .status-right,
+.vertical-lr-maya .status-left, .vertical-lr-maya .status-right {
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* 시계 및 버튼 텍스트 세로로 */
+.vertical-rl #realTimeClock, 
+.vertical-lr-mongolian #realTimeClock, 
+.vertical-lr-maya #realTimeClock,
+.vertical-rl .status-btn span,
+.vertical-lr-mongolian .status-btn span,
+.vertical-lr-maya .status-btn span {
+    writing-mode: vertical-rl;
+    text-orientation: upright; /* 숫자가 옆으로 눕지 않게 */
+    letter-spacing: 2px;
+}
+
+.vertical-rl .status-btn, 
+.vertical-lr-mongolian .status-btn, 
+.vertical-lr-maya .status-btn {
+    flex-direction: column; /* 아이콘 위, 텍스트 아래 */
+}

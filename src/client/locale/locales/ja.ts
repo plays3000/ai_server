@@ -44,5 +44,83 @@ export const ja: LocaleResource = {
     btn_settings: "設定",
 
     btn_login: 'ログイン',
-    btn_logout: 'ログアウト'
+    btn_logout: 'ログアウト',
+    btn_signup: "会員登録",
+    btn_train_template: "テンプレート学習",
+    nav_login: "ログイン",
+    nav_logout: "ログアウト",
+    nav_signup: "会員登録",
+    nav_train_template: "テンプレート学習",
+
+    // User Info
+    user_idx: "固有番号",
+    user_id: "ユーザーID",
+    user_password: "パスワード",
+    user_name: "氏名",
+    user_phone: "電話番号",
+    user_email: "メールアドレス",
+
+    // Group & Company
+    group_name: "グループ名",
+    group_company_reg_num: "事業者登録番号",
+    company_name: "会社名",
+    company_belonging_group_code: "所属グループコード",
+
+    // Login Page
+    title_login: "ログイン",
+    lbl_id: "ID",
+    placeholder_id: "IDを入力してください",
+    lbl_password: "パスワード",
+    placeholder_password: "パスワードを入力してください",
+    link_find_id: "IDをお忘れの方",
+    link_find_pw: "パスワードをお忘れの方",
+    btn_login_action: "ログイン",
+    btn_go_signup: "会員登録",
+    lbl_social_login: "ソーシャルアカウントでログイン",
+
+    // Signup Page - Common
+    title_signup: "会員登録",
+    lbl_basic_info: "基本情報",
+    lbl_confirm_id: "ID確認",
+    placeholder_confirm_id: "IDを再入力してください",
+    lbl_confirm_pw: "パスワード確認",
+    placeholder_confirm_pw: "パスワードを再入力してください",
+    lbl_name: "氏名",
+    placeholder_name: "実名を入力してください",
+    lbl_phone: "電話番号",
+    placeholder_phone: "010-0000-0000",
+    lbl_email: "メールアドレス",
+    placeholder_email: "example@email.com",
+    lbl_select_role: "登録タイプ選択",
+
+    // Role Cards
+    role_group_title: "グループ設立",
+    role_group_desc: "複数の会社を管理する<br>グループ管理者",
+    role_company_title: "法人設立",
+    role_company_desc: "独立した会社、または<br>グループ傘下の法人",
+    role_employee_title: "一般社員",
+    role_employee_desc: "招待コードを通じて<br>会社に所属",
+
+    // Input Fields
+    lbl_group_name: "グループ名",
+    placeholder_group_name: "設立するグループ名を入力",
+    lbl_business_num: "事業者登録番号",
+    placeholder_business_num: "ハイフンなしで数字のみ",
+    
+    lbl_company_name: "会社名（法人名）",
+    placeholder_company_name: "会社名を入力してください",
+    lbl_parent_group_code: "所属グループコード",
+    placeholder_parent_group_code: "ある場合は入力してください",
+    lbl_rep_position: "代表者役職",
+    placeholder_rep_position: "例：代表取締役、CEO",
+
+    lbl_invite_code: "会社招待コード",
+    placeholder_invite_code: "受け取った招待コードを入力",
+    lbl_department: "部署名",
+    placeholder_department: "所属部署",
+    lbl_position: "役職",
+    placeholder_position: "現在の役職",
+
+    btn_complete_signup: "登録完了",
+    btn_back: "戻る"
 };

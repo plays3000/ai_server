@@ -2,32 +2,33 @@
 
 <div class="login-container">
     <h2>로그인</h2>
+    <form><h2 data-i18n="title_login">로그인</h2>
     <form>
         <div class="input-section">
             <div class="form-group">
-                <label for="id">아이디</label>
-                <input type="text" id="id" class="form-input" placeholder="아이디 입력">
+                <label for="id" data-i18n="lbl_id">아이디</label>
+                <input type="text" id="id" class="form-input" data-i18n="placeholder_id" placeholder="아이디 입력">
             </div>
             <div class="form-group">
-                <label for="password">비밀번호</label>
-                <input type="password" id="password" class="form-input" placeholder="비밀번호 입력">
+                <label for="password" data-i18n="lbl_password">비밀번호</label>
+                <input type="password" id="password" class="form-input" data-i18n="placeholder_password" placeholder="비밀번호 입력">
             </div>
             
             <div class="utility-links">
-                <a href="#">아이디 찾기</a>
+                <a href="#" data-i18n="link_find_id">아이디 찾기</a>
                 <span class="separator">|</span>
-                <a href="#">비밀번호 찾기</a>
+                <a href="#" data-i18n="link_find_pw">비밀번호 찾기</a>
             </div>
 
             <div class="btn-group main-actions">
-                <button type="submit" class="btn btn-primary">로그인</button>
-                <button type="reset" class="btn">초기화</button>
-                <button type="button" class="btn btn-signup">회원가입</button>
+                <button type="submit" class="btn btn-primary" data-i18n="btn_login_action">로그인</button>
+                <button type="reset" class="btn" data-i18n="btn_reset">초기화</button>
+                <button type="button" class="btn btn-signup" data-i18n="btn_go_signup">회원가입</button>
             </div>
         </div>
 
         <div class="divider">
-            <span>소셜 계정으로 로그인</span>
+            <span data-i18n="lbl_social_login">소셜 계정으로 로그인</span>
         </div>
 
         <div class="social-grid">

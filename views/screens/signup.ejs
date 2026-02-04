@@ -43,125 +43,124 @@
 <link rel="stylesheet" href="/css/login-signup.css">
 
 <div class="login-container signup-container">
-    <h2>회원가입</h2>
+    <h2 data-i18n="title_signup">회원가입</h2>
     <form id="signupForm">
-        <div class="section-title">기본 정보</div>
+        <div class="section-title" data-i18n="lbl_basic_info">기본 정보</div>
         
         <div class="form-row">
             <div class="form-group required-field">
-                <label for="id">아이디 <span class="req">*</span></label>
-                <input type="text" id="id" class="form-input" placeholder="아이디 입력" required>
+                <label for="id"><span data-i18n="lbl_id">아이디</span> <span class="req">*</span></label>
+                <input type="text" id="id" class="form-input" data-i18n="placeholder_id" placeholder="아이디 입력" required>
             </div>
             <div class="form-group required-field">
-                <label for="id-confirm">아이디 확인 <span class="req">*</span></label>
-                <input type="text" id="id-confirm" class="form-input" placeholder="아이디 재입력" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-group required-field">
-                <label for="password">비밀번호 <span class="req">*</span></label>
-                <input type="password" id="password" class="form-input" placeholder="비밀번호 입력" required>
-            </div>
-            <div class="form-group required-field">
-                <label for="password-confirm">비밀번호 확인 <span class="req">*</span></label>
-                <input type="password" id="password-confirm" class="form-input" placeholder="비밀번호 재입력" required>
+                <label for="id-confirm"><span data-i18n="lbl_confirm_id">아이디 확인</span> <span class="req">*</span></label>
+                <input type="text" id="id-confirm" class="form-input" data-i18n="placeholder_confirm_id" placeholder="아이디 재입력" required>
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-group required-field">
-                <label for="personal-name">이름 <span class="req">*</span></label>
-                <input type="text" id="personal-name" class="form-input" placeholder="실명 입력" required>
+                <label for="password"><span data-i18n="lbl_password">비밀번호</span> <span class="req">*</span></label>
+                <input type="password" id="password" class="form-input" data-i18n="placeholder_password" placeholder="비밀번호 입력" required>
             </div>
             <div class="form-group required-field">
-                <label for="phone">전화번호 <span class="req">*</span></label>
-                <input type="tel" id="phone" class="form-input" placeholder="010-0000-0000" required>
+                <label for="password-confirm"><span data-i18n="lbl_confirm_pw">비밀번호 확인</span> <span class="req">*</span></label>
+                <input type="password" id="password-confirm" class="form-input" data-i18n="placeholder_confirm_pw" placeholder="비밀번호 재입력" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group required-field">
+                <label for="personal-name"><span data-i18n="lbl_name">이름</span> <span class="req">*</span></label>
+                <input type="text" id="personal-name" class="form-input" data-i18n="placeholder_name" placeholder="실명 입력" required>
+            </div>
+            <div class="form-group required-field">
+                <label for="phone"><span data-i18n="lbl_phone">전화번호</span> <span class="req">*</span></label>
+                <input type="tel" id="phone" class="form-input" data-i18n="placeholder_phone" placeholder="010-0000-0000" required>
             </div>
         </div>
         
         <div class="form-group required-field">
-            <label for="email">이메일 <span class="req">*</span></label>
-            <input type="email" id="email" class="form-input" placeholder="example@email.com" required>
+            <label for="email"><span data-i18n="lbl_email">이메일</span> <span class="req">*</span></label>
+            <input type="email" id="email" class="form-input" data-i18n="placeholder_email" placeholder="example@email.com" required>
         </div>
 
-        <div class="divider"><span>가입 유형 선택</span></div>
+        <div class="divider"><span data-i18n="lbl_select_role">가입 유형 선택</span></div>
         
         <div class="role-selector">
             <label class="role-card active" onclick="selectRole('group')">
                 <input type="radio" name="role" value="group" checked hidden>
                 <div class="icon"><i class="fas fa-network-wired"></i></div>
-                <div class="title">그룹 창설</div>
-                <div class="desc">여러 회사를 관리하는<br>그룹 관리자</div>
+                <div class="title" data-i18n="role_group_title">그룹 창설</div>
+                <div class="desc" data-i18n="role_group_desc">여러 회사를 관리하는<br>그룹 관리자</div>
             </label>
 
             <label class="role-card" onclick="selectRole('company')">
                 <input type="radio" name="role" value="company" hidden>
                 <div class="icon"><i class="fas fa-building"></i></div>
-                <div class="title">법인 창설</div>
-                <div class="desc">독립된 회사 또는<br>그룹 산하 법인</div>
+                <div class="title" data-i18n="role_company_title">법인 창설</div>
+                <div class="desc" data-i18n="role_company_desc">독립된 회사 또는<br>그룹 산하 법인</div>
             </label>
 
             <label class="role-card" onclick="selectRole('employee')">
                 <input type="radio" name="role" value="employee" hidden>
                 <div class="icon"><i class="fas fa-user-tie"></i></div>
-                <div class="title">일반 직원</div>
-                <div class="desc">초대 코드를 통해<br>회사에 소속</div>
+                <div class="title" data-i18n="role_employee_title">일반 직원</div>
+                <div class="desc" data-i18n="role_employee_desc">초대 코드를 통해<br>회사에 소속</div>
             </label>
         </div>
 
         <div class="role-fields-container">
-            
             <div id="fields-group" class="role-section">
                 <div class="form-group required-field">
-                    <label>그룹명 <span class="req">*</span></label>
-                    <input type="text" name="group_name" class="form-input" placeholder="설립할 그룹명을 입력하세요">
+                    <label><span data-i18n="lbl_group_name">그룹명</span> <span class="req">*</span></label>
+                    <input type="text" name="group_name" class="form-input" data-i18n="placeholder_group_name" placeholder="설립할 그룹명을 입력하세요">
                 </div>
                 <div class="form-group required-field">
-                    <label>사업자등록번호 <span class="req">*</span></label>
-                    <input type="text" name="business_num" class="form-input" placeholder="- 없이 숫자만 입력">
+                    <label><span data-i18n="lbl_business_num">사업자등록번호</span> <span class="req">*</span></label>
+                    <input type="text" name="business_num" class="form-input" data-i18n="placeholder_business_num" placeholder="- 없이 숫자만 입력">
                 </div>
             </div>
 
             <div id="fields-company" class="role-section" style="display: none;">
                 <div class="form-group required-field">
-                    <label>회사명 (법인명) <span class="req">*</span></label>
-                    <input type="text" name="company_name" class="form-input" placeholder="회사 이름을 입력하세요">
+                    <label><span data-i18n="lbl_company_name">회사명 (법인명)</span> <span class="req">*</span></label>
+                    <input type="text" name="company_name" class="form-input" data-i18n="placeholder_company_name" placeholder="회사 이름을 입력하세요">
                 </div>
                 <div class="form-row">
                     <div class="form-group optional-field">
-                        <label>소속 그룹 코드 (선택)</label>
-                        <input type="text" name="parent_group_code" class="form-input" placeholder="그룹 코드가 있다면 입력">
+                        <label data-i18n="lbl_parent_group_code">소속 그룹 코드 (선택)</label>
+                        <input type="text" name="parent_group_code" class="form-input" data-i18n="placeholder_parent_group_code" placeholder="그룹 코드가 있다면 입력">
                     </div>
                     <div class="form-group optional-field">
-                        <label>대표자 직급 (선택)</label>
-                        <input type="text" name="rep_position" class="form-input" placeholder="예: 대표이사, CEO">
+                        <label data-i18n="lbl_rep_position">대표자 직급 (선택)</label>
+                        <input type="text" name="rep_position" class="form-input" data-i18n="placeholder_rep_position" placeholder="예: 대표이사, CEO">
                     </div>
                 </div>
             </div>
 
             <div id="fields-employee" class="role-section" style="display: none;">
                 <div class="form-group required-field">
-                    <label>회사 초대 코드 <span class="req">*</span></label>
-                    <input type="text" name="invite_code" class="form-input" placeholder="전달받은 초대 코드를 입력하세요">
+                    <label><span data-i18n="lbl_invite_code">회사 초대 코드</span> <span class="req">*</span></label>
+                    <input type="text" name="invite_code" class="form-input" data-i18n="placeholder_invite_code" placeholder="전달받은 초대 코드를 입력하세요">
                 </div>
                 <div class="form-row">
                     <div class="form-group optional-field">
-                        <label>부서명 (선택)</label>
-                        <input type="text" name="department" class="form-input" placeholder="소속 부서">
+                        <label data-i18n="lbl_department">부서명 (선택)</label>
+                        <input type="text" name="department" class="form-input" data-i18n="placeholder_department" placeholder="소속 부서">
                     </div>
                     <div class="form-group optional-field">
-                        <label>직급 (선택)</label>
-                        <input type="text" name="position" class="form-input" placeholder="본인 직급">
+                        <label data-i18n="lbl_position">직급 (선택)</label>
+                        <input type="text" name="position" class="form-input" data-i18n="placeholder_position" placeholder="본인 직급">
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="btn-group mt-20">
-            <button type="submit" class="btn btn-primary btn-login">회원가입 완료</button>
-            <button type="button" class="btn btn-signup" onclick="history.back()">뒤로가기</button>
-            <button type="reset" class="btn btn-reset">초기화</button>
+            <button type="submit" class="btn btn-primary btn-login" data-i18n="btn_complete_signup">회원가입 완료</button>
+            <button type="button" class="btn btn-signup" onclick="history.back()" data-i18n="btn_back">뒤로가기</button>
+            <button type="reset" class="btn btn-reset" data-i18n="btn_reset">초기화</button>
         </div>
     </form>
 </div>

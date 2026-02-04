@@ -44,5 +44,83 @@ export const zh_cn: LocaleResource = {
     btn_settings: "设置",
     
     btn_login: '登录',
-    btn_logout: '退出'
+    btn_logout: '退出',
+    btn_signup: "注册",
+    btn_train_template: "模板学习",
+    nav_login: "登录",
+    nav_logout: "退出",
+    nav_signup: "注册",
+    nav_train_template: "模板学习",
+
+    // User Info
+    user_idx: "唯一编号",
+    user_id: "账号",
+    user_password: "密码",
+    user_name: "姓名",
+    user_phone: "电话号码",
+    user_email: "电子邮箱",
+
+    // Group & Company
+    group_name: "集团名称",
+    group_company_reg_num: "企业注册号",
+    company_name: "公司名称",
+    company_belonging_group_code: "所属集团代码",
+
+    // Login Page
+    title_login: "登录",
+    lbl_id: "账号",
+    placeholder_id: "请输入账号",
+    lbl_password: "密码",
+    placeholder_password: "请输入密码",
+    link_find_id: "找回账号",
+    link_find_pw: "找回密码",
+    btn_login_action: "登录",
+    btn_go_signup: "注册会员",
+    lbl_social_login: "使用社交账号登录",
+
+    // Signup Page - Common
+    title_signup: "会员注册",
+    lbl_basic_info: "基本信息",
+    lbl_confirm_id: "确认账号",
+    placeholder_confirm_id: "请再次输入账号",
+    lbl_confirm_pw: "确认密码",
+    placeholder_confirm_pw: "请再次输入密码",
+    lbl_name: "姓名",
+    placeholder_name: "请输入真实姓名",
+    lbl_phone: "电话号码",
+    placeholder_phone: "010-0000-0000",
+    lbl_email: "电子邮箱",
+    placeholder_email: "example@email.com",
+    lbl_select_role: "选择注册类型",
+
+    // Role Cards
+    role_group_title: "创建集团",
+    role_group_desc: "管理多家公司的<br>集团管理员",
+    role_company_title: "创建法人",
+    role_company_desc: "独立公司或<br>集团旗下法人",
+    role_employee_title: "普通员工",
+    role_employee_desc: "通过邀请码<br>加入公司",
+
+    // Input Fields
+    lbl_group_name: "集团名称",
+    placeholder_group_name: "请输入欲创建的集团名称",
+    lbl_business_num: "企业注册号",
+    placeholder_business_num: "请输入数字，无需横线",
+    
+    lbl_company_name: "公司名称（法人名）",
+    placeholder_company_name: "请输入公司名称",
+    lbl_parent_group_code: "所属集团代码",
+    placeholder_parent_group_code: "如有则输入",
+    lbl_rep_position: "代表人职务",
+    placeholder_rep_position: "例：董事长、CEO",
+
+    lbl_invite_code: "公司邀请码",
+    placeholder_invite_code: "请输入收到的邀请码",
+    lbl_department: "部门名称",
+    placeholder_department: "所属部门",
+    lbl_position: "职务",
+    placeholder_position: "个人职务",
+
+    btn_complete_signup: "完成注册",
+    btn_back: "返回"
 };
