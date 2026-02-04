@@ -29,3 +29,19 @@ header h1 { font-size: 1.5rem; color: #2c3e50; }
 .reset-btn:hover { background-color: #ff6b6b; color: white; }
 .reset-btn i { margin-right: 5px; }
 
+/* [추가] 사용자 정보 스타일 */
+.user-info {
+    position: absolute;
+    right: 120px; /* 초기화 버튼의 너비를 고려해 왼쪽으로 띄움 */
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.85rem;
+    color: #7f8c8d;
+    font-weight: 500;
+    pointer-events: none; /* 클릭 방해 금지 */
+}
+
+/* 모바일 대응: 화면이 좁아지면 글자가 겹칠 수 있으므로 숨김 처리 */
+@media (max-width: 600px) {
+    .user-info { display: none; }
+}

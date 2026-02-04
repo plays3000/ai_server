@@ -29,6 +29,7 @@
     "mysql2": "^3.16.2",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "passport-local": "^1.0.0",
     "passport-naver-v2": "^2.0.8",
     "typescript": "^5.9.3",
     "xlsx": "^0.18.5"
@@ -42,6 +43,7 @@
     "@types/node": "^25.1.0",
     "@types/passport": "^1.0.17",
     "@types/passport-google-oauth20": "^2.0.17",
+    "@types/passport-local": "^1.0.38",
     "ts-loader": "^9.5.4",
     "ts-node": "^10.9.2",
     "tsx": "^4.21.0",
