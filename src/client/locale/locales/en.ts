@@ -77,6 +77,8 @@ export const en: LocaleResource = {
     btn_login_action: "Login",
     btn_go_signup: "Sign Up",
     lbl_social_login: "Sign in with Social Account",
+    confirm_logout: "Are you sure you want to log out?",
+    alert_logged_out: "You have been logged out.",
 
     // Signup Page - Common
     title_signup: "Sign Up",

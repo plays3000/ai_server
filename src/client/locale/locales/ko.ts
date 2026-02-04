@@ -77,6 +77,8 @@ export const ko: LocaleResource = {
     btn_login_action: "로그인",
     btn_go_signup: "회원가입",
     lbl_social_login: "소셜 계정으로 로그인",
+    confirm_logout: "로그아웃 하시겠습니까?",
+    alert_logged_out: "로그아웃 되었습니다.",
 
     // 회원가입 페이지 - 공통
     title_signup: "회원가입",

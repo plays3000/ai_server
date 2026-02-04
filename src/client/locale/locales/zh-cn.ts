@@ -77,6 +77,8 @@ export const zh_cn: LocaleResource = {
     btn_login_action: "登录",
     btn_go_signup: "注册会员",
     lbl_social_login: "使用社交账号登录",
+    confirm_logout: "确定要退出吗？",
+    alert_logged_out: "已退出。",
 
     // Signup Page - Common
     title_signup: "会员注册",

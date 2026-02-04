@@ -94,6 +94,8 @@ export interface LocaleResource {
     btn_login_action: string;       // (동사) 로그인
     btn_go_signup: string;          // 회원가입 (이동 버튼)
     lbl_social_login: string;       // 소셜 계정으로 로그인
+    confirm_logout: string; // 로그아웃 하시겠습니까?
+    alert_logged_out: string; // 로그아웃 되었습니다.
 
     // [신규] 회원가입 페이지 - 공통
     title_signup: string;           // 회원가입

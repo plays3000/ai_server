@@ -77,6 +77,8 @@ export const ja: LocaleResource = {
     btn_login_action: "ログイン",
     btn_go_signup: "会員登録",
     lbl_social_login: "ソーシャルアカウントでログイン",
+    confirm_logout: "ログアウトしますか？",
+    alert_logged_out: "ログアウトしました。",
 
     // Signup Page - Common
     title_signup: "会員登録",

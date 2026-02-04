@@ -5,6 +5,9 @@ export class HeaderManager {
     private loginBtn: HTMLButtonElement | null;
     private loginBtnText: HTMLElement | null;
     private loginIcon: HTMLElement | null;
+    
+    // [추가 1] 양식학습 버튼 변수 선언
+    private trainTemplateBtn: HTMLButtonElement | null;
 
     // 생성자에서 콜백 함수(델리게이트)를 받습니다.
     constructor(private onResetRequest: () => void) {
@@ -13,8 +16,11 @@ export class HeaderManager {
         this.loginBtnText = document.getElementById('loginBtnText');
         this.loginIcon = this.loginBtn?.querySelector('i') || null;
 
+        // [추가 2] DOM 요소 가져오기 (HTML id와 일치해야 함)
+        this.trainTemplateBtn = document.getElementById('nav-train-template') as HTMLButtonElement;
+
         this.initializeEvents();
-        this.checkLoginStatus(); // 시작할 때 로그인 상태 확인
+        this.checkLoginStatus(); 
     }
 
     private initializeEvents(): void {
@@ -32,51 +38,49 @@ export class HeaderManager {
         if (this.loginBtn) {
             this.loginBtn.addEventListener('click', () => this.handleLoginClick());
         }
+
+        // [추가 3] 양식학습 버튼 클릭 이벤트
+        if (this.trainTemplateBtn) {
+            this.trainTemplateBtn.addEventListener('click', () => {
+                // 원하는 경로로 이동 (라우터 설정에 따라 주소 변경 필요)
+                // 예: '/train-template' 또는 '/content/train' 등
+                window.location.href = '/train-template'; 
+            });
+        }
     }
 
-    /**
-     * 현재 로그인 상태를 확인하고 UI를 업데이트합니다.
-     */
     private checkLoginStatus(): void {
         if (!this.loginBtn || !this.loginBtnText || !this.loginIcon) return;
 
-        const token = localStorage.getItem('accessToken'); // 백엔드 연동 시 저장한 토큰 키
+        const token = localStorage.getItem('accessToken'); 
 
         if (token) {
-            // [로그인 상태] -> 로그아웃 버튼으로 변경
-            this.loginBtnText.textContent = '로그아웃'; // 다국어 적용 시 I18nManager.getText('btn_logout')
-            this.loginBtn.title = '로그아웃';
-            this.loginIcon.className = 'fas fa-sign-out-alt'; // 나가는 아이콘
-            this.loginBtn.classList.add('logged-in'); // 필요 시 CSS 추가 스타일링
+            // [로그인 상태]
+            this.loginBtnText.textContent = I18nManager.getText('btn_logout') || '로그아웃';
+            this.loginBtn.title = I18nManager.getText('btn_logout') || '로그아웃';
+            this.loginIcon.className = 'fas fa-sign-out-alt'; 
+            this.loginBtn.classList.add('logged-in'); 
         } else {
-            // [비로그인 상태] -> 로그인 버튼으로 변경
+            // [비로그인 상태]
             this.loginBtnText.textContent = I18nManager.getText('btn_login') || '로그인';
-            this.loginBtn.title = '로그인';
-            this.loginIcon.className = 'fas fa-sign-in-alt'; // 들어가는 아이콘
+            this.loginBtn.title = I18nManager.getText('btn_login') || '로그인';
+            this.loginIcon.className = 'fas fa-sign-in-alt'; 
             this.loginBtn.classList.remove('logged-in');
         }
     }
 
-    /**
-     * 로그인/로그아웃 버튼 클릭 핸들러
-     */
     private handleLoginClick(): void {
         const token = localStorage.getItem('accessToken');
 
         if (token) {
-            // [로그아웃 처리]
-            if (confirm('로그아웃 하시겠습니까?')) {
-                localStorage.removeItem('accessToken'); // 토큰 삭제
-                // 필요하다면 사용자 정보도 삭제
-                // localStorage.removeItem('userProfile'); 
-                
-                alert('로그아웃 되었습니다.');
-                this.checkLoginStatus(); // UI 갱신
-                window.location.reload(); // 페이지 새로고침 (상태 초기화)
+            if (confirm(I18nManager.getText('confirm_logout') || '로그아웃 하시겠습니까?')) {
+                localStorage.removeItem('accessToken'); 
+                alert(I18nManager.getText('alert_logged_out') || '로그아웃 되었습니다.');
+                this.checkLoginStatus(); 
+                window.location.reload(); 
             }
         } else {
-            // [로그인 페이지로 이동]
-            window.location.href = '/login'; // 로그인 페이지 경로 (라우터 설정에 맞게 변경)
+            window.location.href = '/login'; 
         }
     }
 }
