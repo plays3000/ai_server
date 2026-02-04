@@ -8,6 +8,8 @@ import { model, chatbot } from '../config/geminiConfig.js';
 import { type RowDataPacket } from 'mysql2';
 import {fileToGenerativePart} from '../client/readFiles.js';
 import configs from '../../config.json' with { type: "json" };
+import { isAuthenticated } from '../middleware/authMiddleware.js';
+import { genAI, generationConfig } from '../config/geminiConfig.js';
 
 // [Interface] 
 interface TemplateRow extends RowDataPacket {
@@ -135,32 +137,59 @@ async function generateExcelReport(template: TemplateRow, extractedData: any, us
 }
 
 //메인 채팅 라우트
-router.post('/chat', upload.array('mediaFile', configs.maxCount * 4), async (req: Request, res: Response) => {
-    const user = { id: 1, name: "김AI", dept: "개발팀", position: "대리" };
+router.post('/chat', isAuthenticated, upload.array('mediaFile', configs.maxCount * 4), async (req: Request, res: Response) => {
+    const user = req.user as any; 
+
+    if (!user) {
+        return res.status(401).json({ success: false, message: '세션이 만료되었습니다.' });
+    }
+    
     const { message } = req.body;
     const files = req.files as Express.Multer.File[];
 
     try {
-        // 1. 입력 데이터 및 컨텍스트 준비
+        // [추가] 로그인한 사용자의 정보를 시스템 지침에 녹여냅니다.
+        const dynamicInstruction = `
+            당신은 ${user.company_name || '회사'}의 전용 업무 비서입니다.
+            현재 대화 중인 사용자: ${user.name} (${user.rank_name || user.position || '사원'})
+            
+            사용자가 "나에 대해 설명해줘"라고 하면 "네, ${user.name}님"이라며 위 정보를 알려주세요.
+            모든 대답은 정중한 비즈니스 톤으로 합니다.
+        `;
+
+        // [수정] genAI를 사용하여 사용자 맞춤형 모델 인스턴스를 생성합니다.
+        // (참고: gemini-2.5-flash는 현재 유효하지 않을 수 있으니 설정 파일과 동일하게 1.5-flash 권장)
+        const customModel = genAI.getGenerativeModel({ 
+            model: "gemini-1.5-flash", 
+            systemInstruction: dynamicInstruction,
+            generationConfig // 기존 geminiConfig의 설정을 그대로 따릅니다.
+        });
+
+        // 1. 입력 데이터 준비 (기존 코드 유지)
         const { chatInputs, fileContext } = await prepareChatInputs(message, files);
         if (chatInputs.length === 0) return res.status(400).json({ reply: "내용이 없습니다." });
 
         // 2. 의도 파악
         const intent = await classifyIntent(message);
 
-        // 3. 분기 처리
+        // 3. 일반 채팅 분기
         if (intent !== 'REPORT') {
-            const result = await model.generateContent(chatInputs);
+            // [수정] 위에서 만든 customModel을 사용합니다.
+            const result = await customModel.generateContent(chatInputs);
             const reply = result.response.text();
-            await pool.query('INSERT INTO chat_history (user_id, user_msg, ai_reply) VALUES (?, ?, ?)', [user.id, message || "파일", reply]);
+            
+            await pool.query(
+                'INSERT INTO chat_history (user_id, company_id, user_msg, ai_reply) VALUES (?, ?, ?, ?)', 
+                [user.id, user.company_id, message || "파일", reply]
+            );
             cleanupFiles(files);
             return res.json({ reply, downloadUrl: null });
         }
 
-        // 4. REPORT 모드: 템플릿 조회 및 데이터 추출
+        // 4. REPORT 모드 (기존 코드 유지)
         const [templates] = await pool.query<TemplateRow[]>(
-            `SELECT * FROM document_templates WHERE name LIKE ? AND is_active = 1 ORDER BY version DESC LIMIT 1`, 
-            ['%일일업무보고서%']
+            `SELECT * FROM document_templates WHERE name LIKE ? AND company_id = ? AND is_active = 1 ORDER BY version DESC LIMIT 1`, 
+            ['%일일업무보고서%', user.company_id]
         );
 
         if (templates.length > 0) {
@@ -168,21 +197,22 @@ router.post('/chat', upload.array('mediaFile', configs.maxCount * 4), async (req
             const schema = typeof template.schema_def === 'string' ? JSON.parse(template.schema_def) : template.schema_def;
             
             const extractionPrompt = `[목표]: JSON 추출\n[메시지]: "${message}"\n[데이터]: ${fileContext}\n[Schema]: ${JSON.stringify(schema.mappings)}`;
-            const extractResult = await generateWithRetry(extractionPrompt);
-            const extractedData = JSON.parse(extractResult?.response.text().replace(/```json|```/g, '').trim() || "{}");
+            
+            // 추출 시에도 customModel을 사용하면 더 일관성 있는 답변이 나옵니다.
+            const extractResult = await customModel.generateContent(extractionPrompt);
+            const extractedData = JSON.parse(extractResult.response.text().replace(/```json|```/g, '').trim() || "{}");
 
-            // 5. 파일 생성
             const { downloadUrl } = await generateExcelReport(template, extractedData, user);
             const aiReply = "업무보고서를 생성했습니다.";
 
-            await pool.query('INSERT INTO chat_history (user_id, user_msg, ai_reply) VALUES (?, ?, ?)', [user.id, message, aiReply]);
+            await pool.query('INSERT INTO chat_history (user_id, company_id, user_msg, ai_reply) VALUES (?, ?, ?, ?)', [user.id, user.company_id, message, aiReply]);
             cleanupFiles(files);
             return res.json({ reply: aiReply, downloadUrl });
         }
 
-        // 템플릿 없을 시 기본 응답
         cleanupFiles(files);
-        res.json({ reply: (await model.generateContent(chatInputs)).response.text() });
+        const finalResult = await customModel.generateContent(chatInputs);
+        res.json({ reply: finalResult.response.text() });
 
     } catch (error) {
         cleanupFiles(files);

@@ -19,28 +19,27 @@ export default function passportConfig() {
     // 세션 복원: 유저 정보 및 회사/부서 정보 JOIN
     passport.deserializeUser(async (id: number, done) => {
         try {
+            // [수정] 회사명(company_name)과 부서명(dept_name)을 JOIN으로 함께 가져옵니다.
             const query = `
                 SELECT 
                     u.*, 
                     c.company_name, 
-                    d.dept_name,
-                    u.rank_level 
+                    d.dept_name 
                 FROM users u
-                LEFT JOIN companies c ON u.company_id = c.id
+                LEFT JOIN companies c ON u.company_id = c.company_id
                 LEFT JOIN departments d ON u.dept_id = d.dept_id
                 WHERE u.id = ?
             `;
 
-            // mysql2/promise의 pool은 .promise() 없이 바로 query를 호출합니다.
             const [rows] = await db.query<User[]>(query, [id]);
 
             if (rows.length > 0) {
-                done(null, rows[0]);
+                done(null, rows[0]); // 이제 req.user에 소속 정보가 포함됩니다.
             } else {
                 done(null, false);
             }
         } catch (err) {
-            console.error('Deserialize Error:', err);
+            console.error('Passport Deserialize Error:', err);
             done(err);
         }
     });

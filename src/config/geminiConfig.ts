@@ -8,7 +8,7 @@ if (!apiKey) {
     throw new Error("GEMINI_API_KEY가 환경 변수에 설정되어 있지 않습니다. .env 파일을 확인해주세요.");
 }
 
-const genAI = new GoogleGenerativeAI(apiKey);
+export const genAI = new GoogleGenerativeAI(apiKey);
 
 // 1. 설정 객체에 명시적 타입 부여
 export const generationConfig: GenerationConfig = {

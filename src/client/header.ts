@@ -23,19 +23,21 @@ export class HeaderManager {
             if (data.success && data.user) {
                 const user = data.user;
                 
-                // 1. 헤더 텍스트 업데이트
+                // 1. 헤더 UI 업데이트
                 if (this.userInfoEl) {
                     const company = user.company_name || '개인';
                     const rank = user.rank_name || user.position || '사원';
                     this.userInfoEl.innerText = `[${company}] ${user.name} ${rank}`;
                 }
 
-                // 2. 전역 변수에 저장 (타 모듈에서 자동채우기 등에 활용 가능)
+                // 2. [핵심] 전역 변수에 저장하여 템플릿 자동채우기에서 사용 가능케 함
                 (window as any).currentUser = user;
+                
+                // 정보 로드 완료 이벤트 발생 (템플릿 페이지 등에서 감지용)
+                window.dispatchEvent(new CustomEvent('userLoaded', { detail: user }));
             }
         } catch (err) {
-            // 로그인 전이거나 세션이 없는 경우 조용히 넘어갑니다.
-            console.log('Header: User information not available.');
+            console.error('사용자 정보 로드 실패:', err);
         }
     }
 

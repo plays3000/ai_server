@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>ERP 통합 가입 및 로그인 테스트</title>
+    <style>
+        body { font-family: 'Pretendard', sans-serif; background: #f0f2f5; padding: 20px; }
+        .section-title { text-align: center; color: #2c3e50; margin-bottom: 30px; }
+        .common-fields { max-width: 1000px; margin: 0 auto 20px; background: white; padding: 20px; border-radius: 12px; border-top: 5px solid #2c3e50; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; max-width: 1100px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid #eee; }
+        .card h3 { margin-top: 0; padding-bottom: 10px; border-bottom: 1px solid #eee; font-size: 1.1rem; }
+        
+        /* 로그인 섹션 전용 스타일 */
+        .login-section { max-width: 1000px; margin: 40px auto; background: #fff; padding: 30px; border-radius: 12px; border: 2px solid #3498db; }
+        .login-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-reg { background: #2c3e50; color: white; margin-top: 10px; }
+        .btn-login { background: #3498db; color: white; }
+        .btn-me { background: #8e44ad; color: white; margin-top: 15px; }
+        
+        #result-box { max-width: 1000px; margin: 20px auto; background: #222; color: #0f0; padding: 20px; border-radius: 8px; font-family: monospace; min-height: 100px; white-space: pre-wrap; word-break: break-all; }
+        .required::after { content: ' *'; color: #e74c3c; }
+    </style>
+</head>
+<body>
+
+    <h1 class="section-title">🛡️ ERP 시스템 인증 통합 테스트</h1>
+
+    <div class="common-fields">
+        <h3>👤 1단계: 개인 필수 정보 (공통)</h3>
+        <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+            <div class="form-group"><label class="required">아이디</label><input type="text" id="username" placeholder="user123"></div>
+            <div class="form-group"><label class="required">이메일</label><input type="email" id="email" placeholder="test@test.com"></div>
+            <div class="form-group"><label class="required">비밀번호</label><input type="password" id="password"></div>
+            <div class="form-group"><label class="required">이름</label><input type="text" id="name"></div>
+            <div class="form-group"><label class="required">전화번호</label><input type="text" id="phone" placeholder="010-0000-0000"></div>
+        </div>
+    </div>
+
+    <div class="grid-container">
+        <div class="card">
+            <h3>🏢 그룹 창설 (관리자)</h3>
+            <div class="form-group"><label class="required">그룹명</label><input type="text" id="group_name"></div>
+            <div class="form-group"><label class="required">사업자번호</label><input type="text" id="biz_num"></div>
+            <button class="btn btn-reg" onclick="submitAuth('group_create')">그룹장 가입</button>
+        </div>
+
+        <div class="card">
+            <h3>🏢 법인 창설 (중간 관리자)</h3>
+            <div class="form-group"><label class="required">회사명</label><input type="text" id="company_name"></div>
+            <div class="form-group"><label>소속 그룹 코드</label><input type="text" id="group_code"></div>
+            <button class="btn btn-reg" onclick="submitAuth('company_create')">법인장 가입</button>
+        </div>
+
+        <div class="card">
+            <h3>👥 일반 직원 합류</h3>
+            <div class="form-group"><label class="required">회사 초대 코드</label><input type="text" id="invite_code"></div>
+            <div class="form-group"><label>부서/직급</label><input type="text" id="dept_pos" placeholder="인사팀/대리"></div>
+            <button class="btn btn-reg" onclick="submitAuth('join')">직원 가입</button>
+        </div>
+    </div>
+
+    <div class="login-section">
+        <div class="login-grid">
+            <div>
+                <h3 style="margin-top:0;">🔑 2단계: 로그인 테스트</h3>
+                <div class="form-group"><label>이메일</label><input type="email" id="loginEmail"></div>
+                <div class="form-group"><label>비밀번호</label><input type="password" id="loginPw"></div>
+                <button class="btn btn-login" onclick="handleLogin()">로그인하기</button>
+            </div>
+            <div>
+                <h3 style="margin-top:0;">🚀 3단계: 세션 및 데이터 연동 확인</h3>
+                <p style="font-size:0.85rem; color:#666;">로그인 성공 후 아래 버튼을 눌러보세요.</p>
+                <button class="btn btn-me" onclick="checkMe()">내 소속 정보 확인 (/auth/me)</button>
+                <a href="/" style="display:block; text-align:center; margin-top:15px; color:#3498db; text-decoration:none; font-weight:bold;">메인 챗봇 화면으로 이동 →</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="result-box">API 응답 결과가 여기에 실시간으로 표시됩니다.</div>
+
+    <script>
+        async function submitAuth(type) {
+            const data = {
+                username: document.getElementById('username').value,
+                email: document.getElementById('email').value,
+                password: document.getElementById('password').value,
+                name: document.getElementById('name').value,
+                phone: document.getElementById('phone').value,
+                type: type,
+                group_name: document.getElementById('group_name').value,
+                biz_num: document.getElementById('biz_num').value,
+                company_name: document.getElementById('company_name').value,
+                invite_code: document.getElementById('invite_code').value
+            };
+
+            const res = await fetch('/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            document.getElementById('result-box').innerText = "[가입 결과]\n" + JSON.stringify(result, null, 2);
+        }
+
+        async function handleLogin() {
+            const data = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPw').value
+            };
+
+            const res = await fetch('/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            
+            if (result.success) {
+                // 토큰 저장 (필요 시)
+                if (result.token) localStorage.setItem('token', result.token);
+                document.getElementById('result-box').innerText = "[로그인 성공]\n" + JSON.stringify(result, null, 2);
+            } else {
+                document.getElementById('result-box').innerText = "[로그인 실패]\n" + JSON.stringify(result, null, 2);
+            }
+        }
+
+        async function checkMe() {
+            // 세션(쿠키) 기반 인증 확인
+            const res = await fetch('/auth/me');
+            const result = await res.json();
+            document.getElementById('result-box').innerText = "[내 정보 확인 결과]\n" + JSON.stringify(result, null, 2);
+            
+            if (result.success) {
+                alert(`${result.user.company_name} 소속 ${result.user.name}님 확인되었습니다!`);
+            }
+        }
+    </script>
+</body>
+</html>

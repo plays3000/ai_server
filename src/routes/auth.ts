@@ -30,70 +30,78 @@ const generateInviteCode = (name: string): string => {
 // =========================================================================
 // 1. 회원가입 API (회사 생성 및 합류 로직)
 // =========================================================================
-router.post('/register', async (req: Request<{}, {}, RegisterDTO>, res: Response<AuthResponse>) => {
+router.post('/register', async (req: Request, res: Response) => {
     try {
         const { 
-            email, password, name, phone, 
-            type, 
-            companyName, bizNum, ownerName,
-            inviteCode,
-            dept_id
+            username, email, password, name, phone, type,
+            group_name, biz_num, 
+            company_name, group_code, owner_position,
+            invite_code, dept_name, position_name
         } = req.body;
 
-        if (!email || !password || !name || !type) {
-            return res.status(400).json({ success: false, message: '필수 정보가 누락되었습니다.' });
+        // 1. 공통 필수값 검증
+        if (!username || !email || !password || !name || !phone) {
+            return res.status(400).json({ success: false, message: '개인 필수 정보가 누락되었습니다.' });
         }
 
-        const [existing] = await db.query<RowDataPacket[]>(
-            'SELECT id FROM users WHERE email = ?', [email]
-        );
-        
-        if (existing.length > 0) {
-            return res.status(409).json({ success: false, message: '이미 가입된 이메일입니다.' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, authConfig.bcryptRounds || 10);
+        const hashedPassword = await bcrypt.hash(password, 10);
         let companyId: number | null = null;
-        let rankLevel = 1; 
+        let rankLevel = 1;
 
-        if (type === 'create') {
-            if (!companyName) return res.status(400).json({ success: false, message: "회사명은 필수입니다." });
+        // -----------------------------------------------------------------
+        // [CASE 1] 그룹 창설
+        // -----------------------------------------------------------------
+        if (type === 'group_create') {
+            if (!group_name || !biz_num) return res.status(400).json({ success: false, message: '그룹명과 사업자번호는 필수입니다.' });
             
-            const newInviteCode = generateInviteCode(companyName);
-            // 007 SQL 패치에 맞춰 컬럼명을 매핑합니다.
+            // 그룹 생성 -> 해당 그룹에 속한 기본 회사(본사) 생성 로직
+            const [groupResult] = await db.query<ResultSetHeader>('INSERT INTO `groups` (group_name) VALUES (?)', [group_name]);
+            const [compResult] = await db.query<ResultSetHeader>(
+                'INSERT INTO companies (group_id, company_name, business_registration_number, invite_code) VALUES (?, ?, ?, ?)',
+                [groupResult.insertId, group_name + " 본사", biz_num, generateInviteCode(group_name)]
+            );
+            companyId = compResult.insertId;
+            rankLevel = 9; // 그룹장
+        }
+        // -----------------------------------------------------------------
+        // [CASE 2] 법인 창설
+        // -----------------------------------------------------------------
+        else if (type === 'company_create') {
+            if (!company_name) return res.status(400).json({ success: false, message: '회사명은 필수입니다.' });
+            
+            const newInviteCode = generateInviteCode(company_name);
             const [result] = await db.query<ResultSetHeader>(
-                'INSERT INTO companies (company_name, business_registration_number, owner_name, invite_code) VALUES (?, ?, ?, ?)',
-                [companyName, bizNum || null, ownerName || name, newInviteCode]
+                'INSERT INTO companies (company_name, invite_code) VALUES (?, ?)',
+                [company_name, newInviteCode]
             );
             companyId = result.insertId;
-            rankLevel = 9; 
-        } 
-        else if (type === 'join' && inviteCode) {
-            const [companies] = await db.query<RowDataPacket[]>(
-                'SELECT company_id FROM companies WHERE invite_code = ?', [inviteCode]
-            );
-            if (companies.length === 0) {
-                return res.status(404).json({ success: false, message: "유효하지 않은 초대 코드입니다." });
-            }
+            rankLevel = 8; // 법인 관리자
+        }
+        // -----------------------------------------------------------------
+        // [CASE 3] 일반 직원 합류 (초대 코드 필수)
+        // -----------------------------------------------------------------
+        else if (type === 'join') {
+            if (!invite_code) return res.status(400).json({ success: false, message: '초대 코드가 필요합니다.' });
+            
+            const [companies] = await db.query<RowDataPacket[]>('SELECT company_id FROM companies WHERE invite_code = ?', [invite_code]);
+            if (companies.length === 0) return res.status(404).json({ success: false, message: '유효하지 않은 초대 코드입니다.' });
+            
             companyId = companies[0]!.company_id;
-            rankLevel = 1;
+            rankLevel = 1; // 일반 직원
         }
 
-        await db.query<ResultSetHeader>(
-            `INSERT INTO users (email, password, name, phone, company_id, rank_level, role, dept_id) 
+        // 최종 유저 저장
+        await db.query(
+            `INSERT INTO users (username, email, password, name, phone, company_id, rank_level, role) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [
-                email, hashedPassword, name, phone || null, 
-                companyId, rankLevel, rankLevel >= 9 ? 'admin' : 'user',
-                dept_id || null
-            ]
+            [username, email, hashedPassword, name, phone, companyId, rankLevel, rankLevel >= 8 ? 'admin' : 'user']
         );
 
-        res.status(201).json({ success: true, message: '회원가입이 완료되었습니다.' });
+        res.status(201).json({ success: true, message: '회원가입 성공!' });
 
     } catch (error) {
-        console.error('Registration Error:', error);
-        res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
+        console.error(error);
+        res.status(500).json({ success: false, message: '서버 에러' });
     }
 });
 
@@ -146,10 +154,20 @@ router.post('/login', async (req: Request<{}, {}, LoginDTO>, res: Response<AuthR
 // 3. 내 정보 API (Passport 세션 기반 자동채우기용 데이터 제공)
 // =========================================================================
 router.get('/me', isAuthenticated, (req, res) => {
-    // passportConfig의 deserializeUser에서 JOIN된 풍부한 정보가 담겨있습니다.
+    if (!req.user) {
+        return res.status(401).json({ success: false, message: '로그인이 필요합니다.' });
+    }
+
+    // passportConfig에서 JOIN으로 가져온 모든 정보가 담겨있습니다.
     const user = req.user as User;
-    const { password, ...safeUser } = user;
-    res.json({ success: true, user: safeUser as any });
+    
+    // 보안을 위해 비밀번호 필드는 제거하고 응답합니다.
+    const { password, ...safeUserInfo } = user;
+
+    res.json({
+        success: true,
+        user: safeUserInfo
+    });
 });
 
 // =========================================================================
