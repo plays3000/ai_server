@@ -71,6 +71,10 @@ app.get('/signup', (req: Request, res: Response) => {
     res.render('screens/signup');
 });
 
+app.get('/board', (req: Request, res: Response) => {
+    res.render('screens/report-board');
+});
+
 app.post('/chat', upload.array('mediaFile', 10), async (req, res) => {
     try {
         const files = req.files as Express.Multer.File[]; 

@@ -57,6 +57,7 @@ class ChatbotApp {
         document.getElementById('nav-chat')?.addEventListener('click', () => this.loadContent('/content/chat'));
         document.getElementById('nav-login')?.addEventListener('click', () => this.loadContent('/content/login'));
         document.getElementById('nav-signup')?.addEventListener('click', () => this.loadContent('/content/signup'));
+        document.getElementById('nav-board')?.addEventListener('click', () => this.loadContent('/content/board'));
     }
 
     private async loadContent(url: string): Promise<void> {
@@ -84,6 +85,24 @@ class ChatbotApp {
 
         const exampleBtn = document.getElementById('btnExample');
         exampleBtn?.addEventListener('click', () => this.fillExampleData());
+        
+        // [추가] 툴바의 재무/회계/인사 버튼에 이벤트 연결
+        // inputbox.ejs에 해당 버튼들에 id나 class를 추가해야 찾기 쉽습니다.
+        // 예: <div class="icon-btn category-btn" data-type="finance">...</div>
+        
+        const categoryBtns = document.querySelectorAll('.icon-btn span[data-i18n^="icon_"]');
+        
+        categoryBtns.forEach(span => {
+            const btn = span.parentElement; // .icon-btn
+            if(btn) {
+                btn.addEventListener('click', () => {
+                    // 예: /content/report-board 경로의 HTML을 로드한다고 가정
+                    // 실제로는 서버에 해당 경로 라우팅이 되어 있어야 하거나, 
+                    // 클라이언트에서 동적으로 HTML을 생성해야 합니다.
+                    this.loadBoardView(); 
+                });
+            }
+        });
     }
 
     private fillExampleData(): void {
@@ -346,6 +365,59 @@ class ChatbotApp {
     private clearFiles(): void {
         this.filesData = { image: [], video: [], audio: [], file: [] };
         this.renderFileList();
+    }
+    
+    // [신규] 보드 화면 로드 함수
+    private async loadBoardView(): Promise<void> {
+        try {
+            // 서버에 report-board.ejs를 렌더링해서 주는 API가 있다고 가정 (/content/board)
+            // 없다면 아래처럼 클라이언트에서 HTML string을 직접 주입할 수도 있습니다.
+            /*
+            const response = await fetch('/content/board');
+            if (!response.ok) throw new Error('Failed to load board');
+            const html = await response.text();
+            this.mainContent.innerHTML = html;
+            */
+
+            // 테스트용: 위에서 만든 HTML을 직접 주입 (서버 설정 없이 바로 확인 가능)
+            const boardHtml = `
+                <div class="board-container">
+                    <div class="board-header">
+                        <h2>생성된 보고서 목록</h2>
+                        <button class="close-board-btn" id="closeBoardBtn"><i class="fas fa-times"></i></button>
+                    </div>
+                    <div class="board-columns">
+                        <div class="board-column">
+                            <div class="column-header color-finance"><span class="col-title">회계</span><span class="col-count">3</span></div>
+                            <div class="card-list">
+                                <div class="report-card"><div class="card-title">2024년 1분기 결산</div><div class="card-desc">상세 분석 포함</div></div>
+                                </div>
+                        </div>
+                        <div class="board-column">
+                            <div class="column-header color-hr"><span class="col-title">인사</span><span class="col-count">1</span></div>
+                            <div class="card-list">
+                                <div class="report-card"><div class="card-title">채용 계획안</div><div class="card-desc">신규 채용 TO</div></div>
+                            </div>
+                        </div>
+                         <div class="board-column">
+                            <div class="column-header color-labor"><span class="col-title">노무</span><span class="col-count">0</span></div>
+                            <div class="card-list"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            this.mainContent.innerHTML = boardHtml;
+
+            // 닫기 버튼 이벤트 연결
+            document.getElementById('closeBoardBtn')?.addEventListener('click', () => {
+                // 다시 채팅 화면으로 복귀 (원래 있던 chat-area 컴포넌트 로드)
+                this.loadContent('/content/chat'); 
+            });
+
+        } catch (e) {
+            console.error(e);
+        }
     }
 }
 

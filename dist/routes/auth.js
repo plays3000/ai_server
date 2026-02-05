@@ -6,6 +6,8 @@ import { authConfig } from '../config/authConfig.js';
 import passport from '../config/passportConfig.js';
 const router = express.Router();
 // 1. 일반 회원가입
+// 1. 회원가입
+// 1. 일반 회원가입
 router.post('/register', async (req, res) => {
     try {
         const { email, password, name, companyName } = req.body;
