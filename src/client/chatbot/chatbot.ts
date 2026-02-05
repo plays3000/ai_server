@@ -1,12 +1,11 @@
 import { HeaderManager } from './header.js';
 import { FooterManager } from './footer.js';
-import { FileStore } from './types.js';
+import type { FileStore } from './types.js';
 import { VoiceRecorder } from './voicerecorder.js';
 import { I18nManager } from '../../client/locale/i18n.js';
 
 class ChatbotApp {
     private chatContainer: HTMLElement;
-    // [확인] types.ts의 FileStore 인터페이스에도 video: File[]가 있어야 합니다.
     private filesData: FileStore = { image: [], video: [], audio: [], file: [] };
     
     // UI Elements
@@ -24,9 +23,9 @@ class ChatbotApp {
         this.fileListArea = document.getElementById('fileListArea')!;
         this.mainContent = document.getElementById('main-content')!;
 
-        // 음성 녹음 완료 시 오디오 배열에 추가
+        // 음성 녹음 완료 시 오디오 배열에 추가하고 UI 갱신
         this.voiceRecorder = new VoiceRecorder((audioFile) => {
-            this.filesData.audio.push(audioFile); // audio 배열로 저장
+            this.filesData.audio.push(audioFile);
             this.renderFileList();
         });
 
@@ -44,9 +43,9 @@ class ChatbotApp {
 
         this.setupInputEvents();
         this.setupFileEvents();
-        this.setupNavigationEvents();
+        this.setupNavigationEvents(); // mine 버전의 네비게이션 기능 유지
 
-        // [New] Chat clear button with confirmation
+        // [New] 초기화 버튼 (확인 메시지 포함) - mine 버전
         document.getElementById('chatClearBtn')?.addEventListener('click', () => {
             if (confirm(I18nManager.getText('alert_reset'))) {
                 this.resetChat();
@@ -92,18 +91,17 @@ class ChatbotApp {
         this.detailInput.value = `- 주요 성과 요약\n- 지역별 매출 분석 (그래프 포함)\n- 신규 고객 확보 현황\n- 2분기 목표 및 전략 제안`;
     }
 
-    // 보고서 생성 요청 및 채팅 UI 업데이트
+    // [병합 중요] 메인 로직: mine의 UI 흐름 + main의 서버 통신
     private async generateReport(): Promise<void> {
+        const title = this.titleInput.value.trim();
         const userInput = this.detailInput.value;
-        const title: string = this.titleInput.value.trim();
 
         if (!title) {
             alert('주제를 입력해주세요.');
             return;
         }
 
-        // [중요] 파일을 비우기 전에 현재 상태를 복사(Clone)해서 넘겨야 함
-        // 객체 얕은 복사만 해도 File 객체는 참조 유지되므로 OK
+        // 현재 파일 상태 복사
         const currentFiles: FileStore = {
             image: [...this.filesData.image],
             video: [...this.filesData.video],
@@ -111,29 +109,26 @@ class ChatbotApp {
             file: [...this.filesData.file]
         };
 
-        // 사용자 메시지 추가 (파일 데이터 함께 전달)
-        this.appendMessage('user', title, this.detailInput.value, currentFiles);
+        // 1. 사용자 메시지 화면 표시
+        this.appendMessage('user', title, userInput, currentFiles);
 
         // 2. 로딩 표시
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
-        // 3. 서버로 보낼 데이터 준비
+        // 3. 서버 전송 준비 (main 버전 로직 채용)
         const formData = new FormData();
-        formData.append('message', `${title}\n${userInput}`); // message 변수 대신 조합해서 전달
+        formData.append('message', `${title}\n${userInput}`);
 
-        // 파일 입력 요소 가져오기
+        const allFiles = [
+            ...currentFiles.file, 
+            ...currentFiles.image, 
+            ...currentFiles.video, 
+            ...currentFiles.audio
+        ];
 
-        const fileToSend = currentFiles.file;
-        const imgToSend = currentFiles.image;
-        const videoToSend = currentFiles.video;
-        const audioToSend = currentFiles.audio;
-        const toSend = fileToSend.concat(imgToSend).concat(videoToSend).concat(audioToSend)
-        if (toSend) {
-            // 키 이름을 반드시 'mediaFile'로 서버와 맞춥니다.
-            for (const f of toSend){
-                formData.append('mediaFile', f);
-            }
+        for (const f of allFiles) {
+            formData.append('mediaFile', f);
         }
 
         try {
@@ -162,39 +157,31 @@ class ChatbotApp {
             console.error('에러 발생:', error);
             const loadingEl = document.getElementById(loadingId);
             loadingEl?.remove();
-            this.appendMessage('ai', `<strong>${title}</strong>에 대한 분석 결과입니다.`);
-        }, 2000);
+            alert('서버와 연결할 수 없습니다.');
+        }
     }
 
-    // [New] 스크롤 처리 함수
+    // [mine 버전] 스크롤 처리 함수 (세로쓰기 모드 지원)
     private scrollToBottom(): void {
         const container = this.chatContainer;
         const mode = Array.from(document.body.classList).find(c => c.startsWith('vertical-'));
         
         if (mode === 'vertical-rl') {
-            // 세로쓰기(우->좌): 스크롤을 왼쪽 끝(0) 또는 오른쪽 끝으로 보내야 함
-            // 브라우저마다 RTL 스크롤 동작이 다르므로 주의 (보통 scrollLeft = 0 이 가장 최근)
             container.scrollLeft = 0; 
         } else if (mode === 'vertical-lr-mongolian' || mode === 'vertical-lr-maya') {
-             // 세로쓰기(좌->우): 스크롤을 오른쪽 끝으로
              container.scrollLeft = container.scrollWidth;
         } else {
-            // 가로쓰기: 스크롤을 맨 아래로
-            // flex-direction: column-reverse를 쓰고 있다면 scrollTop = 0이 맨 아래일 수 있음
-            // 현재 CSS에서 column-reverse를 쓰고 있으므로:
             container.scrollTop = container.scrollHeight; 
         }
     }
 
-    // files 인자 추가 (FileStore 타입)
+    // [mine 버전] 메시지 추가 (DOM 조작 방식이 더 최신)
     private appendMessage(role: 'user' | 'ai', title: string, detail: string = '', files?: FileStore): void {
-        
-        // 1. 첨부파일 HTML 생성
         let attachmentHtml = '';
         if (files) {
             attachmentHtml = '<div class="msg-attachment-area">';
 
-            // (A) 이미지 & 비디오 (그리드 형태)
+            // 미디어 파일
             const mediaFiles = [...files.image, ...files.video];
             if (mediaFiles.length > 0) {
                 attachmentHtml += '<div class="msg-media-grid">';
@@ -209,50 +196,32 @@ class ChatbotApp {
                 attachmentHtml += '</div>';
             }
 
-            // (B) 오디오 & 일반 파일 (리스트 형태)
+            // 일반 파일
             const docFiles = [...files.audio, ...files.file];
             if (docFiles.length > 0) {
                 attachmentHtml += '<div class="msg-file-list">';
-                
-                // 오디오
                 files.audio.forEach(file => {
-                    attachmentHtml += `
-                        <div class="msg-file-item">
-                            <i class="fas fa-volume-up"></i> 
-                            <span>${file.name}</span>
-                            </div>`;
+                    attachmentHtml += `<div class="msg-file-item"><i class="fas fa-volume-up"></i><span>${file.name}</span></div>`;
                 });
-                
-                // 일반 파일
                 files.file.forEach(file => {
-                    attachmentHtml += `
-                        <div class="msg-file-item">
-                            <i class="fas fa-file-alt"></i> 
-                            <span>${file.name}</span>
-                        </div>`;
+                    attachmentHtml += `<div class="msg-file-item"><i class="fas fa-file-alt"></i><span>${file.name}</span></div>`;
                 });
                 attachmentHtml += '</div>';
             }
-
             attachmentHtml += '</div>';
         }
 
-        // 2. 최종 HTML 조립
         const html = `
             <div class="message-row ${role}">
                 <div class="bubble ${role}-bubble">
                     <strong>${title}</strong>
                     ${detail ? `<br>${detail.replace(/\n/g, '<br>')}` : ''}
-                    
                     ${attachmentHtml}
                 </div>
             </div>`;
             
         this.chatContainer.insertAdjacentHTML('afterbegin', html);
-        
-        // [New] 메시지 추가 후 스크롤 조정
         requestAnimationFrame(() => this.scrollToBottom());
-    
     }
 
     private appendLoading(id: string): void {
@@ -273,43 +242,35 @@ class ChatbotApp {
         this.clearFiles();
     }
 
-    // --- 파일 처리 로직 ---
+    // --- 파일 처리 로직 (mine 버전 사용) ---
     private setupFileEvents(): void {
         const fileBtn = document.getElementById('btnAttachFile');
         const fileInput = document.getElementById('realFileInput') as HTMLInputElement;
         const imageBtn = document.getElementById('btnAttachImage');
         const imageInput = document.getElementById('realImageInput') as HTMLInputElement;
+        const voiceRecordBtn = document.getElementById('btnVoiceRecord');
 
-        // 일반 파일 버튼
         fileBtn?.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files) this.handleFiles(target.files);
         });
 
-        // 이미지 전용 버튼 (추가됨)
         imageBtn?.addEventListener('click', () => imageInput.click());
         imageInput.addEventListener('change', (e) => {
             const target = e.target as HTMLInputElement;
             if (target.files) this.handleFiles(target.files);
         });
 
-        // 음성 녹음 버튼
-        const voiceRecordBtn = document.getElementById('btnVoiceRecord');
         voiceRecordBtn?.addEventListener('click', () => this.voiceRecorder.startRecording());
     }
 
     private handleFiles(files: FileList): void {
         Array.from(files).forEach(file => {
-            if (file.type.startsWith('image/')) {
-                this.filesData.image.push(file);
-            } else if (file.type.startsWith('video/')) {
-                this.filesData.video.push(file);
-            } else if (file.type.startsWith('audio/')) {
-                this.filesData.audio.push(file);
-            } else {
-                this.filesData.file.push(file);
-            }
+            if (file.type.startsWith('image/')) this.filesData.image.push(file);
+            else if (file.type.startsWith('video/')) this.filesData.video.push(file);
+            else if (file.type.startsWith('audio/')) this.filesData.audio.push(file);
+            else this.filesData.file.push(file);
         });
         this.renderFileList();
     }
@@ -319,43 +280,36 @@ class ChatbotApp {
         if (!fileGrid) return;
         
         fileGrid.innerHTML = '';
-        
-        const totalFiles = this.filesData.image.length + 
-                           this.filesData.video.length + 
-                           this.filesData.audio.length + 
-                           this.filesData.file.length;
+        const totalFiles = this.filesData.image.length + this.filesData.video.length + 
+                           this.filesData.audio.length + this.filesData.file.length;
 
         if (totalFiles === 0) {
             this.fileListArea.classList.remove('active');
             return;
         }
 
-        // 각 카테고리별 렌더링
-        this.renderCategory(fileGrid, 'image');
-        this.renderCategory(fileGrid, 'video');
-        this.renderCategory(fileGrid, 'audio');
-        this.renderCategory(fileGrid, 'file');
+        ['image', 'video', 'audio', 'file'].forEach(type => {
+            this.renderCategory(fileGrid, type as keyof FileStore);
+        });
 
         this.fileListArea.classList.add('active');
     }
     
-    // [중요 수정됨] DOM 생성 로직 구현
+    // [mine 버전] 이벤트 버블링 방지(stopPropagation)가 포함된 안전한 버전
     private renderCategory(container: Element, type: keyof FileStore): void {
         this.filesData[type].forEach((file, index) => {
             const fileItem = document.createElement('div');
             fileItem.className = 'file-item-box';
 
-            // 1. 삭제 버튼 (type과 index를 함께 전달해야 함)
             const removeBtn = document.createElement('div');
             removeBtn.className = 'file-remove-btn';
             removeBtn.innerHTML = '&times;';
             removeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.removeFile(type, index); // ★ 핵심 수정: 종류와 인덱스를 넘김
+                e.stopPropagation(); // 중요: 클릭 이벤트 전파 방지
+                this.removeFile(type, index);
             });
             fileItem.appendChild(removeBtn);
 
-            // 2. 썸네일/아이콘 영역
             const thumbnail = document.createElement('div');
             thumbnail.className = 'thumbnail';
 
@@ -368,17 +322,12 @@ class ChatbotApp {
             } else {
                 const icon = document.createElement('div');
                 icon.className = 'thumb-icon';
-                
-                let iconClass = 'fa-file-alt'; // 기본값
-                if (type === 'video') iconClass = 'fa-film';
-                else if (type === 'audio') iconClass = 'fa-music';
-
+                const iconClass = type === 'video' ? 'fa-film' : (type === 'audio' ? 'fa-music' : 'fa-file-alt');
                 icon.innerHTML = `<i class="fas ${iconClass}"></i>`;
                 thumbnail.appendChild(icon);
             }
             fileItem.appendChild(thumbnail);
 
-            // 3. 파일명
             const fileName = document.createElement('div');
             fileName.className = 'file-name';
             fileName.textContent = file.name;
@@ -389,7 +338,6 @@ class ChatbotApp {
         });
     }
 
-    // [중요 수정됨] 삭제 시 어떤 배열(type)에서 지울지 알아야 함
     private removeFile(type: keyof FileStore, index: number): void {
         this.filesData[type].splice(index, 1);
         this.renderFileList();
