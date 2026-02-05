@@ -92,8 +92,11 @@ class ChatbotApp {
         this.detailInput.value = `- 주요 성과 요약\n- 지역별 매출 분석 (그래프 포함)\n- 신규 고객 확보 현황\n- 2분기 목표 및 전략 제안`;
     }
 
-    private generateReport(): void {
-        const title = this.titleInput.value.trim();
+    // 보고서 생성 요청 및 채팅 UI 업데이트
+    private async generateReport(): Promise<void> {
+        const userInput = this.detailInput.value;
+        const title: string = this.titleInput.value.trim();
+
         if (!title) {
             alert('주제를 입력해주세요.');
             return;
@@ -111,16 +114,52 @@ class ChatbotApp {
         // 사용자 메시지 추가 (파일 데이터 함께 전달)
         this.appendMessage('user', title, this.detailInput.value, currentFiles);
 
+        // 2. 로딩 표시
         const loadingId = `loading-${Date.now()}`;
         this.appendLoading(loadingId);
 
-        // 입력창 및 파일 데이터 초기화
-        this.titleInput.value = '';
-        this.detailInput.value = '';
-        this.clearFiles(); // 여기서 초기화되므로 위에서 복사해둔 currentFiles를 써야 함
+        // 3. 서버로 보낼 데이터 준비
+        const formData = new FormData();
+        formData.append('message', `${title}\n${userInput}`); // message 변수 대신 조합해서 전달
 
-        // AI 응답 시뮬레이션
-        setTimeout(() => {
+        // 파일 입력 요소 가져오기
+
+        const fileToSend = currentFiles.file;
+        const imgToSend = currentFiles.image;
+        const videoToSend = currentFiles.video;
+        const audioToSend = currentFiles.audio;
+        const toSend = fileToSend.concat(imgToSend).concat(videoToSend).concat(audioToSend)
+        if (toSend) {
+            // 키 이름을 반드시 'mediaFile'로 서버와 맞춥니다.
+            for (const f of toSend){
+                formData.append('mediaFile', f);
+            }
+        }
+
+        try {
+            // 4. 서버 통신
+            const response = await fetch('/chat', {
+                method: 'POST',
+                body: formData 
+            });
+
+            if (!response.ok) throw new Error('서버 응답 실패');
+
+            const data = await response.json();
+            
+            // 5. 로딩 제거 및 AI 답변 표시
+            const loadingEl = document.getElementById(loadingId);
+            loadingEl?.remove();
+
+            this.appendMessage('ai', `[분석 결과] ${title}`, data.reply);
+            
+            // 6. 입력창 초기화
+            this.titleInput.value = '';
+            this.detailInput.value = '';
+            this.clearFiles();
+
+        } catch (error) {
+            console.error('에러 발생:', error);
             const loadingEl = document.getElementById(loadingId);
             loadingEl?.remove();
             this.appendMessage('ai', `<strong>${title}</strong>에 대한 분석 결과입니다.`);
